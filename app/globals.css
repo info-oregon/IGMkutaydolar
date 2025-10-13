@@ -1,0 +1,219 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --oregon-blue: #1e40af;
+  --oregon-light-blue: #3b82f6;
+  --oregon-dark-blue: #1e3a8a;
+  --oregon-accent: #06b6d4;
+  --oregon-gray: #64748b;
+  --oregon-light-gray: #f1f5f9;
+  --background: #ffffff;
+  --foreground: #0f172a;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  line-height: 1.6;
+}
+
+/* Oregon Brand Colors */
+.oregon-gradient {
+  background: linear-gradient(135deg, var(--oregon-blue) 0%, var(--oregon-light-blue) 100%);
+}
+
+.oregon-card {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  border: 1px solid #e2e8f0;
+}
+
+.oregon-button-primary {
+  background: linear-gradient(135deg, var(--oregon-blue) 0%, var(--oregon-light-blue) 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  padding: 12px 24px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 14px 0 rgba(30, 64, 175, 0.3);
+}
+
+.oregon-button-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px 0 rgba(30, 64, 175, 0.4);
+}
+
+.oregon-button-secondary {
+  background: white;
+  color: var(--oregon-blue);
+  border: 2px solid var(--oregon-blue);
+  border-radius: 12px;
+  padding: 10px 22px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.oregon-button-secondary:hover {
+  background: var(--oregon-blue);
+  color: white;
+  transform: translateY(-1px);
+}
+
+.oregon-input {
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 12px 16px;
+  font-size: 16px;
+  transition: all 0.3s ease;
+  background: white;
+}
+
+.oregon-input:focus {
+  outline: none;
+  border-color: var(--oregon-light-blue);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.oregon-select-card {
+  border: 2px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 20px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: white;
+}
+
+.oregon-select-card:hover {
+  border-color: var(--oregon-light-blue);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px 0 rgba(59, 130, 246, 0.15);
+}
+
+.oregon-select-card.selected {
+  border-color: var(--oregon-blue);
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(22, 163, 74, 0.1) 100%);
+  box-shadow: 0 8px 25px 0 rgba(30, 64, 175, 0.2);
+}
+
+.oregon-radio-card {
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 16px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: white;
+}
+
+.oregon-radio-card:hover {
+  border-color: #22c55e;
+}
+
+.oregon-radio-card.selected {
+  border-color: #22c55e;
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.15) 0%, rgba(22, 163, 74, 0.15) 100%);
+  box-shadow: 0 4px 12px 0 rgba(34, 197, 94, 0.2);
+}
+
+.oregon-table {
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.oregon-table th {
+  background: linear-gradient(135deg, var(--oregon-blue) 0%, var(--oregon-light-blue) 100%);
+  color: white;
+  font-weight: 600;
+  padding: 16px;
+}
+
+.oregon-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.oregon-table tr:hover {
+  background: rgba(59, 130, 246, 0.02);
+}
+
+/* Tablet ve mobil uyumluluk */
+@media (max-width: 768px) {
+  body {
+    font-size: 16px;
+    line-height: 1.5;
+  }
+  
+  input, button, select, textarea {
+    font-size: 16px;
+    min-height: 44px;
+  }
+  
+  .oregon-select-card {
+    padding: 16px;
+  }
+  
+  .oregon-button-primary, .oregon-button-secondary {
+    padding: 14px 20px;
+    width: 100%;
+    margin-bottom: 8px;
+  }
+}
+
+/* PWA için tam ekran görünüm */
+@media all and (display-mode: standalone) {
+  body {
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+/* Keep Moving Animation */
+@keyframes keepMoving {
+  0% { transform: translateX(-10px); opacity: 0.8; }
+  50% { transform: translateX(0px); opacity: 1; }
+  100% { transform: translateX(-10px); opacity: 0.8; }
+}
+
+.keep-moving-animation {
+  animation: keepMoving 3s ease-in-out infinite;
+}
+
+/* Loading States */
+.oregon-loading {
+  background: linear-gradient(90deg, var(--oregon-light-blue) 25%, var(--oregon-blue) 50%, var(--oregon-light-blue) 75%);
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Success/Error States */
+.oregon-success {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+}
+
+.oregon-error {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+}
+
+.oregon-warning {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: white;
+}
