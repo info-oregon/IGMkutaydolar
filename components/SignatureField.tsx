@@ -1,7 +1,7 @@
 "use client";
 import dynamic from "next/dynamic";
 import { useRef } from "react";
-const SignatureCanvas = dynamic(() => import("react-signature-canvas"), { ssr: false });
+const SignatureCanvas = dynamic(() => import("react-signature-canvas"), { ssr: false }) as any;
 
 export default function SignatureField({
   value,

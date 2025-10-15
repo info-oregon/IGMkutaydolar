@@ -32,7 +32,7 @@ export default function Step4Finalize({ form, setForm, back }: any) {
         <label className="block">mza</label>
         <SignatureField
           value={form.kontrolEdenImza}
-          onChange={(v: string) => setForm({ ...form, kontrolEdenImza: v })}
+          onChange={(v) => setForm({ ...form, kontrolEdenImza: v })}
         />
       </div>
 

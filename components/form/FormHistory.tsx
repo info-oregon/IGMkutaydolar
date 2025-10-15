@@ -134,52 +134,63 @@ export default function FormHistory({ onBack, onLoadForm, onNewForm }: FormHisto
             </div>
           ) : (
             <div className="space-y-4">
-              {forms.map((form) => (
-                <div key={form.id} className="oregon-card p-4 hover:shadow-lg transition-shadow">
+              {forms.map((form, index) => {
+                const normalized = (form as Partial<EnhancedFormData> & { formData?: EnhancedFormData }).formData ?? form;
+                const resolvedStatus = form.customStatus ?? form.status;
+                const aracTuru = normalized.aracTuru ?? (normalized as any).aracTuru ?? '-';
+                const cekiciPlaka = normalized.cekiciPlaka ?? (normalized as any).cekici ?? form.cekiciPlaka ?? '-';
+                const kontrolEden = normalized.kontrolEdenAd ?? form.kontrolEdenAd;
+                const createdAt = form.createdAt ? formatDate(form.createdAt) : '-';
+                const updatedAt = form.updatedAt ? formatDate(form.updatedAt) : '-';
+                const formId = form.id ?? `form-${index}`;
+                const isFinalized = resolvedStatus === 'submitted' || resolvedStatus === 'completed';
+
+                return (
+                  <div key={formId} className="oregon-card p-4 hover:shadow-lg transition-shadow">
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
                         <h3 className="font-semibold text-gray-800">
                           {form.tasiyiciFirma || 'Taşıyıcı Firma Belirtilmemiş'}
                         </h3>
-                        {getStatusBadge(form.status)}
+                        {getStatusBadge(resolvedStatus)}
                       </div>
                       
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-gray-600 mb-3">
                         <div>
                           <span className="font-medium">Araç Türü:</span><br />
-                          {form.formData?.aracTuru || form.aracTuru || '-'}
+                          {aracTuru}
                         </div>
                         <div>
                           <span className="font-medium">Çekici Plaka:</span><br />
-                          {form.formData?.cekici || form.cekici || '-'}
+                          {cekiciPlaka}
                         </div>
                         <div>
                           <span className="font-medium">Oluşturulma:</span><br />
-                          {formatDate(form.createdAt)}
+                          {createdAt}
                         </div>
                         <div>
                           <span className="font-medium">Son Güncelleme:</span><br />
-                          {formatDate(form.updatedAt)}
+                          {updatedAt}
                         </div>
                       </div>
 
-                      {(form.formData?.kontrolEdenAd || form.kontrolEdenAd) && (
+                      {kontrolEden && (
                         <div className="text-sm text-gray-600">
-                          <span className="font-medium">Kontrol Eden:</span> {form.formData?.kontrolEdenAd || form.kontrolEdenAd}
+                          <span className="font-medium">Kontrol Eden:</span> {kontrolEden}
                         </div>
                       )}
                     </div>
 
                     <div className="flex flex-col gap-2 ml-4">
                       <button
-                        onClick={() => onLoadForm(form.id)}
+                        onClick={() => onLoadForm(formId)}
                         className="oregon-button-primary px-4 py-2 text-sm"
                       >
-                        {form.status === 'submitted' ? 'Görüntüle' : 'Devam Et'}
+                        {isFinalized ? 'Görüntüle' : 'Devam Et'}
                       </button>
                       
-                      {form.status === 'submitted' && form.pdfUrl && (
+                      {isFinalized && form.pdfUrl && (
                         <a
                           href={form.pdfUrl}
                           target="_blank"
@@ -191,7 +202,7 @@ export default function FormHistory({ onBack, onLoadForm, onNewForm }: FormHisto
                       )}
                       
                       <button
-                        onClick={() => handleDeleteForm(form.id)}
+                        onClick={() => handleDeleteForm(formId)}
                         className="oregon-error px-4 py-2 text-sm rounded-lg font-medium"
                       >
                         Sil
@@ -199,7 +210,8 @@ export default function FormHistory({ onBack, onLoadForm, onNewForm }: FormHisto
                     </div>
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>

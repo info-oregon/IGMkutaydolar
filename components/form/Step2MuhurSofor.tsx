@@ -121,7 +121,8 @@ export default function Step2MuhurSofor({ form, setForm, next, back }: any) {
             />
             <label className="block">mza</label>
             <SignatureField
-              onSave={(data: string) => {
+              value={local.soforler?.[i]?.imza}
+              onChange={(data?: string) => {
                 const updated = [...(local.soforler || [])];
                 updated[i] = { ...(updated[i] || {}), imza: data };
                 handleChange("soforler", updated);

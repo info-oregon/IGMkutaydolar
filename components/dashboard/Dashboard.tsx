@@ -39,6 +39,8 @@ export default function Dashboard({ onStartNewForm, onLoadForm, onLogout }: Dash
     }
   };
 
+
+  const resolveStatus = (form: EnhancedFormData) => form.customStatus ?? form.status;
   const filterForms = () => {
     let filtered = [...forms];
 
@@ -51,7 +53,7 @@ export default function Dashboard({ onStartNewForm, onLoadForm, onLogout }: Dash
 
     // Filter by status
     if (statusFilter !== 'all') {
-      filtered = filtered.filter(form => form.status === statusFilter);
+      filtered = filtered.filter(form => resolveStatus(form) === statusFilter);
     }
 
     setFilteredForms(filtered);
@@ -209,15 +211,19 @@ export default function Dashboard({ onStartNewForm, onLoadForm, onLogout }: Dash
             </div>
           ) : (
             <div className="space-y-4">
-              {filteredForms.map((form) => (
-                <div key={form.id} className="oregon-card p-4 hover:shadow-lg transition-shadow">
+              {filteredForms.map((form) => {
+                const resolvedStatus = resolveStatus(form);
+                const isFinalized = resolvedStatus === 'completed' || resolvedStatus === 'submitted';
+
+                return (
+                  <div key={form.id} className="oregon-card p-4 hover:shadow-lg transition-shadow">
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
                         <h3 className="font-semibold text-gray-800">
                           {form.tasiyiciFirma || 'Taşıyıcı Firma Belirtilmemiş'}
                         </h3>
-                        {getStatusBadge(form.status)}
+                        {getStatusBadge(resolvedStatus)}
                         <span className="text-xs bg-gray-100 px-2 py-1 rounded font-mono">
                           ID: {typeof form.id === 'string' && form.id ? form.id.slice(-8) : 'N/A'}
                         </span>
@@ -254,10 +260,10 @@ export default function Dashboard({ onStartNewForm, onLoadForm, onLogout }: Dash
                         onClick={() => onLoadForm(form.id!)}
                         className="oregon-button-primary px-4 py-2 text-sm"
                       >
-                        {(form.status === 'completed' || form.status === 'submitted') ? 'Görüntüle' : 'Devam Et'}
+                        {isFinalized ? 'Görüntüle' : 'Devam Et'}
                       </button>
                       
-                      {(form.status === 'completed' || form.status === 'submitted') && form.pdfUrl && (
+                      {isFinalized && form.pdfUrl && (
                         <a
                           href={form.pdfUrl}
                           target="_blank"
@@ -279,7 +285,8 @@ export default function Dashboard({ onStartNewForm, onLoadForm, onLogout }: Dash
                     </div>
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>

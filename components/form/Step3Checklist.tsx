@@ -243,13 +243,17 @@ const saveSignature = () => {
       };
 
       FIZIKI_FIELD_KEYS.forEach((field, index) => {
-        baseData[f'{field}_uygun'] = fiziki[index] === 'uygun' || fiziki[index] === true;
-        baseData[f'{field}_aciklama'] = fizikiAciklama[index] || '';
+        const value = fiziki[index];
+        const normalized = typeof value === 'string' ? value.trim().toLowerCase() : '';
+        baseData[`${field}_uygun`] = normalized === 'uygun';
+        baseData[`${field}_aciklama`] = fizikiAciklama[index] || '';
       });
 
       ZULA_FIELD_KEYS.forEach((field, index) => {
-        baseData[f'{field}_uygun'] = zula[index] === 'uygun' || zula[index] === true;
-        baseData[f'{field}_aciklama'] = zulaAciklama[index] || '';
+        const value = zula[index];
+        const normalized = typeof value === 'string' ? value.trim().toLowerCase() : '';
+        baseData[`${field}_uygun`] = normalized === 'uygun';
+        baseData[`${field}_aciklama`] = zulaAciklama[index] || '';
       });
 
       latestData = baseData;

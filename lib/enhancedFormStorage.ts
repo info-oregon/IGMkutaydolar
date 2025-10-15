@@ -205,11 +205,13 @@ export class EnhancedFormStorageManager {
       console.log('🔄 Auto-saving form...');
 
       const validation = this.validateForm(formData as EnhancedFormData);
-      const status = validation.isValid ? 'completed' : 'draft';
+      const status = validation.isValid ? 'submitted' : 'draft';
+      const customStatus = validation.isValid ? 'completed' : null;
 
       const saveData = {
         form_data: formData,
         status,
+        custom_status: customStatus,
         updated_at: new Date().toISOString(),
         company_id: formData.companyId || null,
         inspector_id: null // Will be set if user system is implemented

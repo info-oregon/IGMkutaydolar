@@ -318,7 +318,9 @@ export default function Step2Checklist({ data, setData, next, back, isReadOnly =
                   <p className="font-medium text-gray-700 mb-2">Şoför {i + 1} İmza</p>
                   <div className="border-2 border-gray-300 rounded-lg bg-white">
                     <SignatureCanvas
-                      ref={(el) => (imzaRefs.current[i] = el)}
+                      ref={(el) => {
+                        imzaRefs.current[i] = el;
+                      }}
                       penColor="black"
                       canvasProps={{ width: 600, height: 180, className: "rounded-lg" }}
                       clearOnResize={false}

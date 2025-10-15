@@ -2,11 +2,12 @@
 import { useState, useEffect } from "react";
 import { getCurrentUser, isAdmin } from "../../lib/auth";
 import { EnhancedFormStorageManager, EnhancedFormData } from "../../lib/enhancedFormStorage";
-import { generateDynamicPDF, generateAndSaveDynamicPDF } from "../../lib/dynamicPdfGenerator";
 import Step1VehicleInfo from "./Step1VehicleInfo";
 import Step2Checklist from "./Step2Checklist";
 import Step3Checklist from "./Step3Checklist";
 import { canEditForm } from "../../lib/auth";
+import { generatePdfFromHtml } from "../../lib/htmlToPdf";
+import { supabase } from "../../lib/supabase";
 
 interface EnhancedFormWizardProps {
   formId?: string;
@@ -28,6 +29,8 @@ export default function EnhancedFormWizard({ formId, onBack }: EnhancedFormWizar
 
   // Check if form is editable
   const isFormEditable = canEditForm(formData.status);
+
+  const effectiveStatus = formData.customStatus ?? formData.status;
 
   // Load existing form if formId provided
   useEffect(() => {
@@ -67,7 +70,8 @@ export default function EnhancedFormWizard({ formId, onBack }: EnhancedFormWizar
         setFormData(existingForm);
         
         // Set appropriate step based on form completeness
-        if (existingForm.status === 'completed' || existingForm.status === 'submitted') {
+        const resolvedStatus = existingForm.customStatus ?? existingForm.status;
+        if (resolvedStatus === 'completed' || resolvedStatus === 'submitted') {
           setStep(3); // Show final step for completed forms
         } else if (existingForm.fizikiKontrol || existingForm.zulaKontrol) {
           setStep(3); // Has control data
@@ -104,8 +108,13 @@ export default function EnhancedFormWizard({ formId, onBack }: EnhancedFormWizar
       console.log('📊 Form completion level:', validation.completionLevel + '%');
 
       // Generate PDF preview
-      const { previewUrl: newPreviewUrl } = await generateDynamicPDF(currentData);
-      setPreviewUrl(newPreviewUrl);
+      const { previewUrl: generatedPreviewUrl } = await generatePdfFromHtml(currentData);
+      setPreviewUrl(prev => {
+        if (prev) {
+          URL.revokeObjectURL(prev);
+        }
+        return generatedPreviewUrl;
+      });
 
       console.log('✅ PDF preview generated successfully');
       alert('PDF önizleme başarıyla oluşturuldu! 📄');
@@ -133,7 +142,30 @@ export default function EnhancedFormWizard({ formId, onBack }: EnhancedFormWizar
       console.log('📊 Final form completion level:', validation.completionLevel + '%');
 
       // Generate and save PDF
-      const { downloadUrl, supabaseUrl } = await generateAndSaveDynamicPDF(currentData);
+      const { previewUrl: generatedPreviewUrl, pdfBytes } = await generatePdfFromHtml(currentData);
+
+      const timestampForFile = new Date().toISOString().replace(/[:.]/g, '-');
+      const filename = `arac-kontrol-${timestampForFile}.pdf`;
+
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('inspection-pdfs')
+        .upload(filename, pdfBytes, {
+          contentType: 'application/pdf',
+          upsert: false
+        });
+
+      if (uploadError) {
+        console.error('❌ Supabase upload error:', uploadError);
+        throw uploadError;
+      }
+
+      console.log('✅ PDF uploaded to Supabase:', uploadData);
+
+      const { data: urlData } = supabase.storage
+        .from('inspection-pdfs')
+        .getPublicUrl(filename);
+
+      const supabaseUrl = urlData.publicUrl;
 
       // Save form as completed
       const updatedFormData = {
@@ -150,10 +182,18 @@ export default function EnhancedFormWizard({ formId, onBack }: EnhancedFormWizar
       alert('Form başarıyla tamamlandı ve kaydedildi! 🎉');
 
       // Download PDF
+      const downloadUrl = generatedPreviewUrl;
       const link = document.createElement('a');
       link.href = downloadUrl;
       link.download = `arac-kontrol-${new Date().toISOString().split('T')[0]}.pdf`;
       link.click();
+
+      setPreviewUrl(prev => {
+        if (prev) {
+          URL.revokeObjectURL(prev);
+        }
+        return generatedPreviewUrl;
+      });
 
       // Return to dashboard
       onBack();
@@ -218,14 +258,14 @@ export default function EnhancedFormWizard({ formId, onBack }: EnhancedFormWizar
               
               {/* Status Badge */}
               <div className={`text-xs px-2 py-1 rounded ${
-                (formData.status === 'completed' || formData.status === 'submitted') ? 'bg-green-500/80' :
-                formData.status === 'sahada' ? 'bg-blue-500/80' :
-                formData.status === 'sahadan_cikis' ? 'bg-purple-500/80' :
+                (effectiveStatus === 'completed' || effectiveStatus === 'submitted') ? 'bg-green-500/80' :
+                effectiveStatus === 'sahada' ? 'bg-blue-500/80' :
+                effectiveStatus === 'sahadan_cikis' ? 'bg-purple-500/80' :
                 'bg-white/20'
               }`}>
-                {(formData.status === 'completed' || formData.status === 'submitted') ? 'Tamamlandı ✅' :
-                 formData.status === 'sahada' ? 'Sahada 🚛' :
-                 formData.status === 'sahadan_cikis' ? 'Sahadan Çıkış 🏁' :
+                {(effectiveStatus === 'completed' || effectiveStatus === 'submitted') ? 'Tamamlandı ✅' :
+                 effectiveStatus === 'sahada' ? 'Sahada 🚛' :
+                 effectiveStatus === 'sahadan_cikis' ? 'Sahadan Çıkış 🏁' :
                  'Taslak 📝'}
               </div>
 
@@ -265,7 +305,7 @@ export default function EnhancedFormWizard({ formId, onBack }: EnhancedFormWizar
                   key={status}
                   onClick={() => handleStatusChange(status)}
                   className={`text-xs px-2 py-1 rounded transition-colors ${
-                    formData.status === status 
+                    effectiveStatus === status 
                       ? 'bg-white text-oregon-blue' 
                       : 'bg-white/20 hover:bg-white/30'
                   }`}

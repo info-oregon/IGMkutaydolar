@@ -1,5 +1,7 @@
 import { supabase } from './supabase';
-import { FormData } from './pdfForm';
+import { EnhancedFormData } from './enhancedFormStorage';
+
+export type FormData = EnhancedFormData;
 
 export interface StoredForm extends FormData {
   id: string;
@@ -436,7 +438,7 @@ export class FormStorageManager {
       // Sadece önemli veriler varsa kaydet
       const hasImportantData = formData.tasiyiciFirma || 
                               formData.aracTuru || 
-                              formData.cekici || 
+                              formData.cekiciPlaka || (formData as any).cekici || 
                               formData.soforler?.some(s => s.ad);
 
       if (hasImportantData) {

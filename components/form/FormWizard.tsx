@@ -6,7 +6,8 @@ import Step2Checklist from "./Step2Checklist";
 import Step3Checklist from "./Step3Checklist";
 import FormHistory from "./FormHistory";
 import { EnhancedFormData, EnhancedFormStorageManager } from "../../lib/enhancedFormStorage";
-import { generateDynamicPDF, generateAndSaveDynamicPDF } from "../../lib/dynamicPdfGenerator";
+import { generatePdfFromHtml } from "../../lib/htmlToPdf";
+import { supabase } from "../../lib/supabase";
 
 export default function FormWizard() {
   const [showWelcome, setShowWelcome] = useState(true);
@@ -54,7 +55,8 @@ export default function FormWizard() {
         setShowWelcome(false);
         
         // Form durumuna göre adımı belirle
-        if (existingForm.status === 'completed') {
+        const resolvedStatus = existingForm.customStatus ?? existingForm.status;
+        if (resolvedStatus === 'completed' || resolvedStatus === 'submitted') {
           setStep(3); // Onaylanmış formları son adımda göster
         } else {
           setStep(1); // Taslakları baştan başlat
@@ -85,8 +87,13 @@ export default function FormWizard() {
       }
 
       // PDF önizleme oluştur
-      const { previewUrl: newPreviewUrl } = await generateDynamicPDF(currentData);
-      setPreviewUrl(newPreviewUrl);
+      const { previewUrl: generatedPreviewUrl } = await generatePdfFromHtml(currentData);
+      setPreviewUrl(prev => {
+        if (prev) {
+          URL.revokeObjectURL(prev);
+        }
+        return generatedPreviewUrl;
+      });
 
       console.log('PDF önizleme başarıyla oluşturuldu');
       // Başarı mesajı
@@ -116,10 +123,38 @@ export default function FormWizard() {
       }
 
       // PDF oluştur ve Supabase'e kaydet
-      const { downloadUrl, supabaseUrl } = await generateAndSaveDynamicPDF(currentData);
+      const { previewUrl: generatedPreviewUrl, pdfBytes } = await generatePdfFromHtml(currentData);
+
+      const timestampForFile = new Date().toISOString().replace(/[:.]/g, '-');
+      const filename = `arac-kontrol-${timestampForFile}.pdf`;
+
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('inspection-pdfs')
+        .upload(filename, pdfBytes, {
+          contentType: 'application/pdf',
+          upsert: false
+        });
+
+      if (uploadError) {
+        console.error('Supabase yükleme hatası:', uploadError);
+        throw uploadError;
+      }
+
+      console.log('PDF Supabase\'e yüklendi:', uploadData);
+
+      const { data: urlData } = supabase.storage
+        .from('inspection-pdfs')
+        .getPublicUrl(filename);
+
+      const supabaseUrl = urlData.publicUrl;
 
       // Formu onaylanmış olarak kaydet
-      const updatedFormData = { ...currentData, pdfUrl: supabaseUrl, status: 'completed' as const };
+      const updatedFormData: EnhancedFormData = {
+        ...currentData,
+        pdfUrl: supabaseUrl,
+        status: 'submitted',
+        customStatus: 'completed',
+      };
       const formId = await EnhancedFormStorageManager.saveForm(updatedFormData, 'completed');
 
       console.log('Form başarıyla onaylandı:', formId);
@@ -127,10 +162,12 @@ export default function FormWizard() {
       alert('Form başarıyla onaylandı ve Supabase\'e kaydedildi! 🎉');
 
       // PDF'i indir
+      const downloadUrl = generatedPreviewUrl;
       const link = document.createElement('a');
       link.href = downloadUrl;
       link.download = `arac-kontrol-${new Date().toISOString().split('T')[0]}.pdf`;
       link.click();
+      setTimeout(() => URL.revokeObjectURL(downloadUrl), 1000);
 
       // Formu sıfırla
       setFormData({ status: 'draft' });
@@ -182,7 +219,7 @@ export default function FormWizard() {
         onNewForm={() => {
           setShowHistory(false);
           setShowWelcome(false);
-          setFormData({});
+          setFormData({ status: 'draft' });
           setCurrentFormId(null);
           setPreviewUrl(undefined);
           setStep(1);
