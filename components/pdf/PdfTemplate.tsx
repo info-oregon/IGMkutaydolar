@@ -26,12 +26,13 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   td: {
     border: '0.5pt solid black',
-    padding: '2px 3px',
+    // DİKEY HİZALAMA VE BOŞLUK İÇİN PADDING GÜNCELLENDİ
+    padding: '4px 3px', 
     verticalAlign: 'middle',
     textAlign: 'center',
     whiteSpace: 'normal',
     wordWrap: 'break-word',
-    height: '16px',
+    height: 'auto', // Yükseklik 'auto' olarak ayarlandı
   },
   labelCell: {
     textAlign: 'left',
@@ -70,6 +71,9 @@ const styles: { [key: string]: React.CSSProperties } = {
     fontFamily: "'Segoe UI Symbol', sans-serif",
     fontSize: '11pt',
     lineHeight: '1',
+  },
+  boldText: {
+    fontWeight: 700,
   }
 };
 
@@ -113,7 +117,8 @@ const PdfTemplate: React.FC<PdfTemplateProps> = ({ formData }) => {
         </tbody>
       </table>
 
-      <div style={{height: '5px'}}></div>
+      {/* DİKEY BOŞLUK ARTIRILDI */}
+      <div style={{height: '10px'}}></div>
 
       <table style={styles.table}>
         <thead><tr><td colSpan={4} style={{...styles.td, ...styles.header}}>ARAÇ VE SEVK BİLGİLERİ</td></tr></thead>
@@ -151,7 +156,8 @@ const PdfTemplate: React.FC<PdfTemplateProps> = ({ formData }) => {
         </tbody>
       </table>
       
-      <div style={{height: '5px'}}></div>
+      {/* DİKEY BOŞLUK ARTIRILDI */}
+      <div style={{height: '10px'}}></div>
 
       <table style={styles.table}>
         <thead><tr><td colSpan={4} style={{...styles.td, ...styles.header}}>ŞOFÖR BİLGİLERİ</td></tr></thead>
@@ -181,7 +187,8 @@ const PdfTemplate: React.FC<PdfTemplateProps> = ({ formData }) => {
         </tbody>
       </table>
 
-      <div style={{height: '5px'}}></div>
+      {/* DİKEY BOŞLUK ARTIRILDI */}
+      <div style={{height: '10px'}}></div>
 
       <table style={styles.table}><tbody>
           <tr>
@@ -199,7 +206,7 @@ const PdfTemplate: React.FC<PdfTemplateProps> = ({ formData }) => {
                 </thead>
                 <tbody>
                   {FIZIKI_DEFAULT.map((item, index) => (
-                      <tr key={`fizik-${index}`} style={{height: 'auto', minHeight: '15px'}}>
+                      <tr key={`fizik-${index}`}>
                           <td style={{ ...styles.td, ...styles.smallText, textAlign: 'left' }}>{item.label}</td>
                           <td style={{ ...styles.td }}><Checkbox checked={get(['fizikiKontrol', index, 'uygun'])} /></td>
                           <td style={{ ...styles.td }}><Checkbox checked={!(get(['fizikiKontrol', index, 'uygun']))} /></td>
@@ -208,11 +215,18 @@ const PdfTemplate: React.FC<PdfTemplateProps> = ({ formData }) => {
                   ))}
                 </tbody>
               </table>
-              <div style={{height: '5px'}}></div>
+              <div style={{height: '10px'}}></div>
               
-              {/* MÜHÜR KONTROL TABLOLARI - TAMAMLANDI */}
+              {/* MÜHÜR KONTROL TABLOLARI */}
               <table style={styles.table}>
-                  <thead><tr><td colSpan={3} style={{...styles.td, ...styles.header}}>MEVCUT MÜHÜR KONTROLÜ</td></tr></thead>
+                  <thead>
+                    <tr><td colSpan={3} style={{...styles.td, ...styles.header}}>MEVCUT MÜHÜR KONTROLÜ</td></tr>
+                    <tr>
+                        <td style={{...styles.td, ...styles.header, ...styles.smallText, width: '50%'}}>Kontrol Noktası</td>
+                        <td style={{...styles.td, ...styles.header, ...styles.smallText, width: '25%'}}>Uygun ✔</td>
+                        <td style={{...styles.td, ...styles.header, ...styles.smallText, width: '25%'}}>Uygun Değil X</td>
+                    </tr>
+                  </thead>
                   <tbody>
                       <tr>
                           <td style={{...styles.td, ...styles.labelCell, ...styles.smallText}}>Mühür Numarası</td>
@@ -240,9 +254,16 @@ const PdfTemplate: React.FC<PdfTemplateProps> = ({ formData }) => {
                       </tr>
                   </tbody>
               </table>
-               <div style={{height: '5px'}}></div>
+               <div style={{height: '10px'}}></div>
               <table style={styles.table}>
-                  <thead><tr><td colSpan={3} style={{...styles.td, ...styles.header}}>YENİ MÜHÜR KONTROLÜ</td></tr></thead>
+                  <thead>
+                    <tr><td colSpan={3} style={{...styles.td, ...styles.header}}>YENİ MÜHÜR KONTROLÜ</td></tr>
+                    <tr>
+                        <td style={{...styles.td, ...styles.header, ...styles.smallText, width: '50%'}}>Kontrol Noktası</td>
+                        <td style={{...styles.td, ...styles.header, ...styles.smallText, width: '25%'}}>Uygun ✔</td>
+                        <td style={{...styles.td, ...styles.header, ...styles.smallText, width: '25%'}}>Uygun Değil X</td>
+                    </tr>
+                  </thead>
                   <tbody>
                       <tr>
                           <td style={{...styles.td, ...styles.labelCell, ...styles.smallText}}>Yeni Mühür Numarası</td>
@@ -285,7 +306,7 @@ const PdfTemplate: React.FC<PdfTemplateProps> = ({ formData }) => {
                 </thead>
                 <tbody>
                   {ZULA_DEFAULT.map((item, index) => (
-                       <tr key={`zula-${index}`} style={{height: 'auto', minHeight: '15px'}}>
+                       <tr key={`zula-${index}`}>
                           <td style={{ ...styles.td, ...styles.smallText, textAlign: 'left' }}>{item.label}</td>
                           <td style={{ ...styles.td }}><Checkbox checked={get(['zulaKontrol', index, 'uygun'])} /></td>
                           <td style={{ ...styles.td }}><Checkbox checked={!(get(['zulaKontrol', index, 'uygun']))} /></td>
@@ -298,27 +319,24 @@ const PdfTemplate: React.FC<PdfTemplateProps> = ({ formData }) => {
           </tr>
       </tbody></table>
       
-       <div style={{height: '5px'}}></div>
+       <div style={{height: '10px'}}></div>
 
-      {/* SONUÇ BÖLÜMÜ - Revize Edildi */}
+      {/* SONUÇ BÖLÜMÜ */}
       <table style={styles.table}>
         <tbody>
-           <tr style={{height: '25px'}}>
-            <td colSpan={11} style={{...styles.td, ...styles.boldText}}>
-                {get(['genelSonuc']) === 'uygun' ? 'KONTROL SONUCU: UYGUN ✔' : 'KONTROL SONUCU: UYGUN'}
+           <tr>
+            <td colSpan={14} style={{border: 'none'}}> {/* Boşluk bırakıldı */}
             </td>
-            <td colSpan={11} style={{...styles.td, ...styles.boldText}}>
-                {get(['genelSonuc']) === 'uygunsuz' ? 'KONTROL SONUCU: UYGUN DEĞİL X' : 'KONTROL SONUCU: UYGUN DEĞİL'}
+            <td colSpan={8} style={{...styles.td, ...styles.boldText, height: '25px'}}>
+                { get(['genelSonuc']) === 'uygun' 
+                    ? 'KONTROL SONUCU: UYGUN ✔' 
+                    : get(['genelSonuc']) === 'uygunsuz' 
+                    ? 'KONTROL SONUCU: UYGUN DEĞİL X' 
+                    : 'KONTROL SONUCU: BELİRTİLMEDİ' }
             </td>
           </tr>
           <tr>
-            <td colSpan={14} style={{...styles.td, ...styles.boldText, verticalAlign: 'top', height: '60px'}}>
-                Fotoğraflar:
-                 <div style={{display:'grid', gridTemplateColumns:'repeat(4, 1fr)', gap:'2px', paddingTop: '2px'}}>
-                 {get(['fotoListesi'], []).slice(0, 4).map((photo: string, index: number) => (
-                  <img key={index} src={photo} alt={`foto ${index+1}`} style={{width: '100%', height: '40px', objectFit: 'cover'}} />
-                ))}
-              </div>
+             <td colSpan={14} style={{border: 'none'}}> {/* Boşluk bırakıldı */}
             </td>
             <td colSpan={8} style={{...styles.td, fontWeight: 700, verticalAlign:'top'}}>
                 KONTROLÜ GERÇEKLEŞTİREN <br/>

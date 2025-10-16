@@ -1,6 +1,7 @@
 "use client";
 import React from "react";
 import SignatureCanvas from "react-signature-canvas";
+import type { EnhancedFormData } from "../../lib/enhancedFormStorage";
 
 type Sofor = { ad?: string; tel?: string; imza?: string };
 type MuhurState = {
@@ -10,15 +11,24 @@ type MuhurState = {
   kilitUygunluk?: boolean | null;
 };
 
-export default function Step2Checklist({ data, setData, next, back, isReadOnly = false }: any) {
+interface Step2ChecklistProps {
+  data: EnhancedFormData;
+  setData: React.Dispatch<React.SetStateAction<EnhancedFormData>>;
+  next: () => void;
+  back: () => void;
+  isReadOnly?: boolean;
+}
+
+export default function Step2Checklist({ data, setData, next, back, isReadOnly = false }: Step2ChecklistProps) {
   // Plaka alanları
-  const [cekici, setCekici] = React.useState<string>(data.cekici || "");
-  const [dorse, setDorse] = React.useState<string>(data.dorse || "");
+  const [cekiciPlaka, setCekiciPlaka] = React.useState<string>(data.cekiciPlaka || "");
+  const [dorsePlaka, setDorsePlaka] = React.useState<string>(data.dorsePlaka || "");
   const [konteynerNo, setKonteynerNo] = React.useState<string>(data.konteynerNo || "");
+  const [kamyonPlaka, setKamyonPlaka] = React.useState<string>(data.kamyonPlaka || "");
 
   // Sevk bilgileri
-  const [mrn, setMrn] = React.useState<string>(data.mrn || "");
-  const [rejimHak, setRejimHak] = React.useState<string>(data.rejimHak || "");
+  const [mrnNo, setMrnNo] = React.useState<string>(data.mrnNo || "");
+  const [rejimHakSahibiAdi, setRejimHakSahibiAdi] = React.useState<string>(data.rejimHakSahibiAdi || "");
 
   // Mühür bilgileri
   const [muhurNum, setMuhurNum] = React.useState<string>(data.muhurNum || "");
@@ -47,6 +57,42 @@ export default function Step2Checklist({ data, setData, next, back, isReadOnly =
     });
   }, [desiredCount]);
 
+  // Form state dışarıdan güncellenirse yerel state'i senkronize et
+  React.useEffect(() => {
+    setCekiciPlaka(data.cekiciPlaka || "");
+    setDorsePlaka(data.dorsePlaka || "");
+    setKonteynerNo(data.konteynerNo || "");
+    setKamyonPlaka(data.kamyonPlaka || "");
+    setMrnNo(data.mrnNo || "");
+    setRejimHakSahibiAdi(data.rejimHakSahibiAdi || "");
+    setMuhur(data.muhurKontrol || {
+      evrakUyum: null,
+      saglamlik: null,
+      gerginlik: null,
+      kilitUygunluk: null
+    });
+    setMuhurNum(data.muhurNum || "");
+    setYeniMuhurNum(data.yeniMuhurNum || "");
+  }, [
+    data.cekiciPlaka,
+    data.dorsePlaka,
+    data.konteynerNo,
+    data.kamyonPlaka,
+    data.mrnNo,
+    data.rejimHakSahibiAdi,
+    data.muhurKontrol,
+    data.muhurNum,
+    data.yeniMuhurNum
+  ]);
+
+  React.useEffect(() => {
+    if (data.soforler && data.soforler.length > 0) {
+      setSoforler(() =>
+        Array.from({ length: desiredCount }, (_, i) => data.soforler?.[i] || {})
+      );
+    }
+  }, [data.soforler, desiredCount]);
+
   const updateSofor = (i: number, key: keyof Sofor, value: string) => {
     setSoforler((prev) => {
       const copy = [...prev];
@@ -63,7 +109,6 @@ export default function Step2Checklist({ data, setData, next, back, isReadOnly =
     label: string;
   }) => {
     const val = muhur[name];
-    const group = `muhur_${name}`;
     
     const handleClick = (newVal: boolean) => {
       if (val === newVal) {
@@ -134,22 +179,32 @@ export default function Step2Checklist({ data, setData, next, back, isReadOnly =
       return { ...s, imza };
     });
 
-    setData({
-      ...data,
-      // plakalar
-      cekici,
-      dorse,
-      konteynerNo,
-      // sevk
-      mrn,
-      rejimHak,
-      // mühür
-      muhurNum,
-      yeniMuhurNum,
-      muhurKontrol: muhur,
-      // şoförler
-      soforler: withSignatures
+    setData((prev) => {
+      const updated: EnhancedFormData = {
+        ...prev,
+        muhurNum,
+        yeniMuhurNum,
+        muhurKontrol: muhur,
+        soforler: withSignatures,
+        mrnNo: prev.sevkDurumu === "Evet" ? mrnNo : undefined,
+        rejimHakSahibiAdi: prev.sevkDurumu === "Evet" ? rejimHakSahibiAdi : undefined
+      };
+
+      if (prev.aracTuru === "Minivan") {
+        updated.kamyonPlaka = kamyonPlaka;
+        updated.cekiciPlaka = undefined;
+        updated.dorsePlaka = undefined;
+        updated.konteynerNo = undefined;
+      } else {
+        updated.cekiciPlaka = cekiciPlaka;
+        updated.dorsePlaka = dorsePlaka;
+        updated.kamyonPlaka = undefined;
+        updated.konteynerNo = prev.aracTuru === "Konteyner" ? konteynerNo : undefined;
+      }
+
+      return updated;
     });
+
     next();
   };
 
@@ -172,15 +227,15 @@ export default function Step2Checklist({ data, setData, next, back, isReadOnly =
                 <input
                   className="oregon-input w-full"
                   placeholder="Çekici Plakası"
-                  value={cekici}
-                  onChange={(e) => setCekici(e.target.value)}
+                  value={cekiciPlaka}
+                  onChange={(e) => setCekiciPlaka(e.target.value)}
                   disabled={isReadOnly}
                 />
                 <input
                   className="oregon-input w-full"
                   placeholder="Dorse Plakası"
-                  value={dorse}
-                  onChange={(e) => setDorse(e.target.value)}
+                  value={dorsePlaka}
+                  onChange={(e) => setDorsePlaka(e.target.value)}
                   disabled={isReadOnly}
                 />
               </>
@@ -191,15 +246,15 @@ export default function Step2Checklist({ data, setData, next, back, isReadOnly =
                 <input
                   className="oregon-input w-full"
                   placeholder="Çekici Plakası"
-                  value={cekici}
-                  onChange={(e) => setCekici(e.target.value)}
+                  value={cekiciPlaka}
+                  onChange={(e) => setCekiciPlaka(e.target.value)}
                   disabled={isReadOnly}
                 />
                 <input
                   className="oregon-input w-full"
                   placeholder="Dorse Plakası"
-                  value={dorse}
-                  onChange={(e) => setDorse(e.target.value)}
+                  value={dorsePlaka}
+                  onChange={(e) => setDorsePlaka(e.target.value)}
                   disabled={isReadOnly}
                 />
                 <input
@@ -216,8 +271,8 @@ export default function Step2Checklist({ data, setData, next, back, isReadOnly =
               <input
                 className="oregon-input w-full"
                 placeholder="Minivan Plakası"
-                value={cekici}
-                onChange={(e) => setCekici(e.target.value)}
+                value={kamyonPlaka}
+                onChange={(e) => setKamyonPlaka(e.target.value)}
                 disabled={isReadOnly}
               />
             )}
@@ -232,15 +287,15 @@ export default function Step2Checklist({ data, setData, next, back, isReadOnly =
               <input
                 className="oregon-input w-full"
                 placeholder="MRN No"
-                value={mrn}
-                onChange={(e) => setMrn(e.target.value)}
+                value={mrnNo}
+                onChange={(e) => setMrnNo(e.target.value)}
                 disabled={isReadOnly}
               />
               <input
                 className="oregon-input w-full"
                 placeholder="Rejim Hak Sahibi Adı"
-                value={rejimHak}
-                onChange={(e) => setRejimHak(e.target.value)}
+                value={rejimHakSahibiAdi}
+                onChange={(e) => setRejimHakSahibiAdi(e.target.value)}
                 disabled={isReadOnly}
               />
             </div>

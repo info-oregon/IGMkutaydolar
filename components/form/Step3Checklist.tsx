@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import SignatureCanvas from "react-signature-canvas";
+import type { ControlRow } from "../../types/form";
 
 const FIZIKI_FIELD_KEYS = [
   'fiziki_genel_saglamlik',
@@ -89,18 +90,70 @@ export default function Step3Checklist({
     "Soğutma ünitesi"
   ];
 
+  const mapInitialSelection = (source: any[] | undefined, rowCount: number): (string | null)[] => {
+    if (!Array.isArray(source)) {
+      return Array(rowCount).fill(null);
+    }
+
+    return Array.from({ length: rowCount }, (_, index) => {
+      const item = source[index];
+      if (item === null || item === undefined) return null;
+      if (typeof item === "string") {
+        const normalized = item.trim().toLowerCase();
+        if (normalized === "uygun" || normalized === "uygunsuz") {
+          return normalized;
+        }
+        if (normalized === "true") return "uygun";
+        if (normalized === "false") return "uygunsuz";
+        return null;
+      }
+
+      if (typeof item === "boolean") {
+        return item ? "uygun" : "uygunsuz";
+      }
+
+      if (typeof item === "object" && item !== null) {
+        const uygunValue =
+          "uygun" in item ? (item.uygun === null || item.uygun === undefined ? null : item.uygun) : null;
+        if (uygunValue === null) return null;
+        return uygunValue ? "uygun" : "uygunsuz";
+      }
+
+      return null;
+    });
+  };
+
+  const mapInitialNotes = (
+    explicitNotes: string[] | undefined,
+    structuredRows: any[] | undefined,
+    rowCount: number
+  ): string[] => {
+    if (Array.isArray(explicitNotes) && explicitNotes.length) {
+      return Array.from({ length: rowCount }, (_, index) => explicitNotes[index] || "");
+    }
+
+    if (Array.isArray(structuredRows)) {
+      return Array.from(
+        { length: rowCount },
+        (_, index) => (structuredRows[index] && typeof structuredRows[index] === "object" && structuredRows[index]?.aciklama) || ""
+      );
+    }
+
+    return Array(rowCount).fill("");
+  };
+
   // State
-  const [fiziki, setFiziki] = useState<(string | null)[]>(
-    data.fizikiKontrol || Array(fizikiRows.length).fill(null)
+  const [fiziki, setFiziki] = useState<(string | null)[]>(() =>
+    mapInitialSelection(data.fizikiKontrol as any[], fizikiRows.length)
   );
-  const [zula, setZula] = useState<(string | null)[]>(
-    data.zulaKontrol || Array(zulaRows.length).fill(null)
+  const [zula, setZula] = useState<(string | null)[]>(() =>
+    mapInitialSelection(data.zulaKontrol as any[], zulaRows.length)
   );
-  const [fizikiAciklama, setFizikiAciklama] = useState<string[]>(
-    data.fizikiAciklama || Array(fizikiRows.length).fill("")
+  const [fizikiAciklama, setFizikiAciklama] = useState<string[]>(() =>
+    mapInitialNotes(data.fizikiAciklama, data.fizikiKontrol as any[], fizikiRows.length)
   );
-  const [zulaAciklama, setZulaAciklama] = useState<string[]>(
-    data.zulaAciklama || Array(zulaRows.length).fill("")
+  const [zulaAciklama, setZulaAciklama] = useState<string[]>(() =>
+    mapInitialNotes(data.zulaAciklama, data.zulaKontrol as any[], zulaRows.length)
   );
   const [genelSonuc, setGenelSonuc] = useState<string | null>(data.genelSonuc || null);
   const [adiSoyadi, setAdiSoyadi] = useState(data.kontrolEdenAd || "");
@@ -221,8 +274,16 @@ const saveSignature = () => {
     setData((prev: any) => {
       const baseData: any = {
         ...prev,
-        fizikiKontrol: fiziki,
-        zulaKontrol: zula,
+        fizikiKontrol: fizikiRows.map<ControlRow>((label, index) => ({
+          label,
+          uygun: fiziki[index] === null ? null : fiziki[index] === "uygun",
+          aciklama: fizikiAciklama[index] || undefined
+        })),
+        zulaKontrol: zulaRows.map<ControlRow>((label, index) => ({
+          label,
+          uygun: zula[index] === null ? null : zula[index] === "uygun",
+          aciklama: zulaAciklama[index] || undefined
+        })),
         fizikiAciklama,
         zulaAciklama,
         genelSonuc,

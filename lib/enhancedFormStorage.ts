@@ -1,5 +1,6 @@
 import { supabase } from './supabase';
 import { authManager } from './auth';
+import type { ControlRow } from '../types/form';
 
 export interface EnhancedFormData {
   // Basic Information
@@ -39,9 +40,9 @@ export interface EnhancedFormData {
   };
   
   // Control Results
-  fizikiKontrol?: (string | boolean | null)[];
+  fizikiKontrol?: ControlRow[];
   fizikiAciklama?: string[];
-  zulaKontrol?: (string | boolean | null)[];
+  zulaKontrol?: ControlRow[];
   zulaAciklama?: string[];
   
   // Inspector Information
@@ -136,9 +137,36 @@ export class EnhancedFormStorageManager {
     totalFields += 2; // Fiziki and Zula controls
     
     // TEMPORARILY DISABLED: Fiziki kontrol validation
-    const fizikiValid = formData.fizikiKontrol && 
-      Array.isArray(formData.fizikiKontrol) &&
-      formData.fizikiKontrol.some(item => item !== null && item !== undefined);
+    const hasChecklistSelection = (list: any): boolean => {
+      if (!Array.isArray(list)) {
+        return false;
+      }
+
+      return list.some(item => {
+        if (item === null || item === undefined) return false;
+
+        if (typeof item === 'string') {
+          const normalized = item.trim().toLowerCase();
+          return normalized === 'uygun' || normalized === 'uygunsuz';
+        }
+
+        if (typeof item === 'boolean') {
+          return true;
+        }
+
+        if (typeof item === 'object') {
+          if ('uygun' in item) {
+            const value = (item as ControlRow).uygun;
+            return value !== null && value !== undefined;
+          }
+          return Object.values(item).some(Boolean);
+        }
+
+        return false;
+      });
+    };
+
+    const fizikiValid = hasChecklistSelection(formData.fizikiKontrol);
     
     if (fizikiValid) {
       completedFields++;
@@ -146,9 +174,7 @@ export class EnhancedFormStorageManager {
     // No error for missing fiziki kontrol - validation temporarily disabled
 
     // TEMPORARILY DISABLED: Zula kontrol validation
-    const zulaValid = formData.zulaKontrol && 
-      Array.isArray(formData.zulaKontrol) &&
-      formData.zulaKontrol.some(item => item !== null && item !== undefined);
+    const zulaValid = hasChecklistSelection(formData.zulaKontrol);
     
     if (zulaValid) {
       completedFields++;

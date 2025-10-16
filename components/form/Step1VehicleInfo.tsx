@@ -1,10 +1,10 @@
 "use client";
-import { useState, useEffect } from "react";
-import { EnhancedFormStorageManager, Company } from "../../lib/enhancedFormStorage";
+import { useState, useEffect, Dispatch, SetStateAction } from "react";
+import { EnhancedFormStorageManager, Company, EnhancedFormData } from "../../lib/enhancedFormStorage";
 
 interface Step1Props {
-  data: any;
-  setData: (data: any) => void;
+  data: EnhancedFormData;
+  setData: Dispatch<SetStateAction<EnhancedFormData>>;
   next: () => void;
   onBack?: () => void;
   isReadOnly?: boolean;
@@ -115,15 +115,15 @@ export default function Step1VehicleInfo({ data, setData, next, onBack, isReadOn
     }
 
     setErrors([]); // Hataları temizle
-    setData({
-      ...data,
+    setData((prev) => ({
+      ...prev,
       tasiyiciFirma: tasiyici,
       aracTuru,
       sevkDurumu: sevk,
       muhurDurumu: muhur,
       soforSayisi,
       companyId: selectedCompanyId, // Şirket ID'sini kaydet
-    });
+    }));
     next();
   };
 
@@ -207,7 +207,7 @@ export default function Step1VehicleInfo({ data, setData, next, onBack, isReadOn
           <input
             type="text"
             value={data?.loadingLocation || ""}
-            onChange={(e) => setData({ ...data, loadingLocation: e.target.value })}
+            onChange={(e) => setData((prev) => ({ ...prev, loadingLocation: e.target.value }))}
             className="oregon-input w-full"
             placeholder="Yükleme yapılan yer"
             disabled={isReadOnly}
@@ -221,7 +221,7 @@ export default function Step1VehicleInfo({ data, setData, next, onBack, isReadOn
           <input
             type="datetime-local"
             value={data?.yuklemeTarihi || ""}
-            onChange={(e) => setData({ ...data, yuklemeTarihi: e.target.value })}
+            onChange={(e) => setData((prev) => ({ ...prev, yuklemeTarihi: e.target.value }))}
             className="oregon-input w-full"
             disabled={isReadOnly}
           />
@@ -235,7 +235,7 @@ export default function Step1VehicleInfo({ data, setData, next, onBack, isReadOn
             <input
               type="number"
               value={data?.preLoadingWeight || ""}
-              onChange={(e) => setData({ ...data, preLoadingWeight: e.target.value })}
+              onChange={(e) => setData((prev) => ({ ...prev, preLoadingWeight: e.target.value }))}
               className="oregon-input w-full"
               placeholder="0"
               disabled={isReadOnly}
@@ -248,7 +248,7 @@ export default function Step1VehicleInfo({ data, setData, next, onBack, isReadOn
             <input
               type="number"
               value={data?.postLoadingWeight || ""}
-              onChange={(e) => setData({ ...data, postLoadingWeight: e.target.value })}
+              onChange={(e) => setData((prev) => ({ ...prev, postLoadingWeight: e.target.value }))}
               className="oregon-input w-full"
               placeholder="0"
             disabled={isReadOnly}

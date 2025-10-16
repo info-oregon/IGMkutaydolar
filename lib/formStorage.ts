@@ -1,5 +1,6 @@
 import { supabase } from './supabase';
 import { EnhancedFormData } from './enhancedFormStorage';
+import type { ControlRow } from '../types/form';
 
 export type FormData = EnhancedFormData;
 
@@ -88,19 +89,34 @@ export class FormStorageManager {
       sevkDurumu: formData.sevkDurumu,
       muhurDurumu: formData.muhurDurumu
     });
-    console.log('🔧 Fiziki kontrol:', {
+    const describeChecklist = (list: any) => {
+      if (!Array.isArray(list)) {
+        return list;
+      }
+
+      return list.map(item => {
+        if (item && typeof item === 'object' && 'uygun' in item) {
+          return {
+            uygun: (item as ControlRow).uygun,
+            aciklama: (item as ControlRow).aciklama
+          };
+        }
+        return item;
+      });
+    };
+    console.log('Fiziki kontrol:', {
       type: typeof formData.fizikiKontrol,
       isArray: Array.isArray(formData.fizikiKontrol),
       length: formData.fizikiKontrol?.length,
-      sample: formData.fizikiKontrol?.slice(0, 3),
-      allValues: formData.fizikiKontrol
+      sample: Array.isArray(formData.fizikiKontrol) ? describeChecklist(formData.fizikiKontrol.slice(0, 3)) : formData.fizikiKontrol,
+      allValues: describeChecklist(formData.fizikiKontrol)
     });
-    console.log('🔍 Zula kontrol:', {
+    console.log('Zula kontrol:', {
       type: typeof formData.zulaKontrol,
       isArray: Array.isArray(formData.zulaKontrol),
       length: formData.zulaKontrol?.length,
-      sample: formData.zulaKontrol?.slice(0, 3),
-      allValues: formData.zulaKontrol
+      sample: Array.isArray(formData.zulaKontrol) ? describeChecklist(formData.zulaKontrol.slice(0, 3)) : formData.zulaKontrol,
+      allValues: describeChecklist(formData.zulaKontrol)
     });
     console.log('👤 Kontrol eden:', {
       kontrolEdenAd: formData.kontrolEdenAd,
@@ -127,54 +143,59 @@ export class FormStorageManager {
       console.warn('⚠️ Mühür durumu seçilmemiş');
     }
 
-    // Fiziki kontrol kontrol (sadece uyarı)
-    const fizikiValid = formData.fizikiKontrol && 
-      Array.isArray(formData.fizikiKontrol) &&
-      formData.fizikiKontrol.length > 0 && 
-      formData.fizikiKontrol.some(item => 
-        // Herhangi bir truthy değer veya açık false değeri kabul et
-        item === true || 
-        item === false || 
-        item === 'uygun' || 
-        item === 'uygunsuz' ||
-        item === 'on' ||
-        (typeof item === 'string' && item.trim() !== '') ||
-        (typeof item === 'number' && !isNaN(item))
-      );
-    
-    console.log('✅ Fiziki kontrol validasyon:', {
+    // Fiziki kontrol kontrol (sadece uyar�)
+    const hasChecklistSelection = (list: any): boolean => {
+      if (!Array.isArray(list)) {
+        return false;
+      }
+
+      return list.some(item => {
+        if (item === null || item === undefined) return false;
+
+        if (typeof item === 'string') {
+          const normalized = item.trim().toLowerCase();
+          return normalized === 'uygun' || normalized === 'uygunsuz';
+        }
+
+        if (typeof item === 'boolean') {
+          return true;
+        }
+
+        if (typeof item === 'object') {
+          if ('uygun' in item) {
+            const value = (item as ControlRow).uygun;
+            return value !== null && value !== undefined;
+          }
+          return Object.values(item).some(Boolean);
+        }
+
+        return false;
+      });
+    };
+
+    const fizikiValid = hasChecklistSelection(formData.fizikiKontrol);
+
+    console.log('Fiziki kontrol validasyon:', {
       fizikiValid,
-      validItems: formData.fizikiKontrol?.filter(item => item === true || item === false || item === 'uygun' || item === 'uygunsuz' || item === 'on' || (typeof item === 'string' && item.trim() !== ''))
+      selections: describeChecklist(formData.fizikiKontrol)
     });
     
     if (!fizikiValid) {
-      warnings.push('Fiziki kontrol alanları boş');
-      console.warn('⚠️ Fiziki kontrol alanları doldurulmamış');
+      warnings.push('Fiziki kontrol alanlari bos');
+      console.warn('WARN: Fiziki kontrol alanlari doldurulmamis');
     }
 
-    // Zula kontrol kontrol (sadece uyarı)
-    const zulaValid = formData.zulaKontrol && 
-      Array.isArray(formData.zulaKontrol) &&
-      formData.zulaKontrol.length > 0 && 
-      formData.zulaKontrol.some(item => 
-        // Herhangi bir truthy değer veya açık false değeri kabul et
-        item === true || 
-        item === false || 
-        item === 'uygun' || 
-        item === 'uygunsuz' ||
-        item === 'on' ||
-        (typeof item === 'string' && item.trim() !== '') ||
-        (typeof item === 'number' && !isNaN(item))
-      );
+    // Zula kontrol kontrol (sadece uyar�)
+    const zulaValid = hasChecklistSelection(formData.zulaKontrol);
     
-    console.log('✅ Zula kontrol validasyon:', {
+    console.log('Zula kontrol validasyon:', {
       zulaValid,
-      validItems: formData.zulaKontrol?.filter(item => item === true || item === false || item === 'uygun' || item === 'uygunsuz' || item === 'on' || (typeof item === 'string' && item.trim() !== ''))
+      selections: describeChecklist(formData.zulaKontrol)
     });
     
     if (!zulaValid) {
-      warnings.push('Zula kontrol alanları boş');
-      console.warn('⚠️ Zula kontrol alanları doldurulmamış');
+      warnings.push('Zula kontrol alanlari bos');
+      console.warn('WARN: Zula kontrol alanlari doldurulmamis');
     }
 
     // Kontrolü gerçekleştiren kontrol (sadece uyarı)
