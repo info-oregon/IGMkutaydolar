@@ -162,7 +162,7 @@ export default function Step3Checklist({
   const [errors, setErrors] = useState<string[]>([]);
   const [hasPreview, setHasPreview] = useState(false);
   const [photos, setPhotos] = useState<string[]>(data.fotoListesi || []);
-  const [manualStatus, setManualStatus] = useState<string>(data.status || 'completed');
+  const [manualStatus, setManualStatus] = useState<string>(data.customStatus || data.status || 'completed');
   
   // New Seal Information State
   const [yeniMuhurNum, setYeniMuhurNum] = useState<string>(data.yeniMuhurNum || "");
@@ -300,7 +300,8 @@ const saveSignature = () => {
         cikis_muhurSaglamlik: yeniMuhurKontrol?.saglamlik ?? null,
         cikis_muhurGerginlik: yeniMuhurKontrol?.gerginlik ?? null,
         cikis_muhurKilit: yeniMuhurKontrol?.kilitUygunluk ?? null,
-        status: manualStatus as any
+        status: manualStatus === 'draft' ? 'draft' : 'submitted',
+        customStatus: manualStatus === 'draft' ? undefined : manualStatus as any
       };
 
       FIZIKI_FIELD_KEYS.forEach((field, index) => {
@@ -814,18 +815,16 @@ const saveSignature = () => {
         {/* Manual Status Selection */}
         <div className="oregon-card p-4 mb-6">
           <h3 className="font-semibold text-lg text-gray-800 mb-4">📋 Form Durumu</h3>
+          <p className="text-sm text-gray-600 mb-3">Bu form hangi durumda kaydedilsin?</p>
           <select
             value={manualStatus}
             onChange={(e) => setManualStatus(e.target.value)}
-            className="oregon-input w-full"
+            className="oregon-input w-full text-lg py-3"
             disabled={isReadOnly}
           >
-            <option value="submitted">Tamamlandı</option>
-            <option value="completed">Tamamlandı (Eski)</option>
-            <option value="sahada">Sahada</option>
-            <option value="sahadan_cikis">Sahadan Çıkış</option>
-            <option value="x">X Durumu</option>
-            <option value="y">Y Durumu</option>
+            <option value="draft">Taslak 📝</option>
+            <option value="sahada">Sahada 🚛</option>
+            <option value="completed">Tamamlandı ✅</option>
           </select>
         </div>
         {/* Navigation */}

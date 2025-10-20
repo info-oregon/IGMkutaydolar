@@ -396,7 +396,8 @@ export class EnhancedFormStorageManager {
       return (data || []).map(form => ({
         ...form.form_data,
         id: form.id,
-        status: form.custom_status || form.status,
+        status: form.status,
+        customStatus: form.custom_status,
         createdAt: form.created_at,
         updatedAt: form.updated_at,
         companyId: form.company_id,
@@ -437,7 +438,8 @@ export class EnhancedFormStorageManager {
       return {
         ...data.form_data,
         id: data.id,
-        status: data.custom_status || data.status,
+        status: data.status,
+        customStatus: data.custom_status,
         createdAt: data.created_at,
         updatedAt: data.updated_at,
         companyId: data.company_id,
@@ -538,7 +540,8 @@ export class EnhancedFormStorageManager {
       const recentForms: EnhancedFormData[] = recentFormsData.map(form => ({
         ...form.form_data,
         id: form.id,
-        status: form.custom_status || form.status,
+        status: form.status,
+        customStatus: form.custom_status,
         createdAt: form.created_at,
         updatedAt: form.updated_at,
         companyId: form.company_id,

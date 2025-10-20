@@ -167,16 +167,17 @@ export default function EnhancedFormWizard({ formId, onBack }: EnhancedFormWizar
 
       const supabaseUrl = urlData.publicUrl;
 
-      // Save form as completed
-      const updatedFormData = {
+      // Save form with selected status
+      const selectedStatus = currentData.customStatus || currentData.status || 'completed';
+      const updatedFormData: EnhancedFormData = {
         ...currentData,
         pdfUrl: supabaseUrl,
-        status: 'submitted' as const,
-        customStatus: 'completed' as const,
+        status: (selectedStatus === 'draft' ? 'draft' : 'submitted') as 'draft' | 'submitted',
+        customStatus: selectedStatus === 'draft' ? undefined : selectedStatus as any,
         timestamp: new Date().toLocaleString('tr-TR')
       };
 
-      const savedId = await EnhancedFormStorageManager.saveForm(updatedFormData, 'submitted');
+      const savedId = await EnhancedFormStorageManager.saveForm(updatedFormData);
 
       console.log('✅ Form submitted successfully:', savedId);
       alert('Form başarıyla tamamlandı ve kaydedildi! 🎉');
