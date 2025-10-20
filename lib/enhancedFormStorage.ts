@@ -284,29 +284,32 @@ export class EnhancedFormStorageManager {
   // Save form with status determination
   static async saveForm(formData: EnhancedFormData, forceStatus?: string): Promise<string> {
     try {
-      console.log('🔄 Saving form with enhanced logic...');
+      console.log('🔄 Saving form with enhanced logic...', {
+        formDataStatus: formData.status,
+        formDataCustomStatus: formData.customStatus,
+        forceStatus
+      });
 
       const user = authManager.getCurrentUser();
       const validation = this.validateForm(formData);
-      
-      // Determine status
-      let status = forceStatus || (validation.isValid ? 'submitted' : 'draft');
-      let customStatus = undefined;
-      
-      // Map custom statuses to database-compatible values
-      if (forceStatus && !['draft', 'submitted'].includes(forceStatus)) {
-        customStatus = forceStatus as any;
-        status = 'submitted'; // Store as submitted in database
-      }
-      
-      // Admin can force any status
-      if (user?.role === 'admin' && forceStatus) {
+
+      // Determine status - prioritize formData values, then forceStatus, then validation
+      let status: 'draft' | 'submitted';
+      let customStatus: string | undefined;
+
+      if (forceStatus) {
+        // ForceStatus takes highest priority (used by admin controls)
         if (['draft', 'submitted'].includes(forceStatus)) {
-          status = forceStatus;
+          status = forceStatus as 'draft' | 'submitted';
+          customStatus = undefined;
         } else {
-          customStatus = forceStatus as any;
+          customStatus = forceStatus;
           status = 'submitted';
         }
+      } else {
+        // Use formData's status values (set by the form)
+        status = formData.status || (validation.isValid ? 'submitted' : 'draft');
+        customStatus = formData.customStatus;
       }
 
       const saveData = {
@@ -318,6 +321,12 @@ export class EnhancedFormStorageManager {
         inspector_id: formData.inspectorId || null,
         pdf_url: formData.pdfUrl || null
       };
+
+      console.log('💾 Saving to database:', {
+        id: formData.id,
+        status: saveData.status,
+        custom_status: saveData.custom_status
+      });
 
       if (formData.id) {
         // Check edit permissions
