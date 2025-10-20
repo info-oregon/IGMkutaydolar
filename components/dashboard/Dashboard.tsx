@@ -44,16 +44,29 @@ export default function Dashboard({ onStartNewForm, onLoadForm, onLogout }: Dash
   const filterForms = () => {
     let filtered = [...forms];
 
-    // Search by company name
+    // Enhanced search across multiple fields
     if (searchTerm.trim()) {
+      const searchLower = searchTerm.toLowerCase();
       filtered = filtered.filter(form =>
-        (form.tasiyiciFirma || '').toLowerCase().includes(searchTerm.toLowerCase())
+        (form.tasiyiciFirma || '').toLowerCase().includes(searchLower) ||
+        (form.cekiciPlaka || '').toLowerCase().includes(searchLower) ||
+        (form.dorsePlaka || '').toLowerCase().includes(searchLower) ||
+        (form.konteynerNo || '').toLowerCase().includes(searchLower) ||
+        (form.mrnNo || '').toLowerCase().includes(searchLower) ||
+        (form.kontrolEdenAd || '').toLowerCase().includes(searchLower)
       );
     }
 
     // Filter by status
     if (statusFilter !== 'all') {
-      filtered = filtered.filter(form => resolveStatus(form) === statusFilter);
+      filtered = filtered.filter(form => {
+        const status = resolveStatus(form);
+        // Map 'submitted' to 'completed' for filtering purposes
+        if (statusFilter === 'completed') {
+          return status === 'completed' || status === 'submitted';
+        }
+        return status === statusFilter;
+      });
     }
 
     setFilteredForms(filtered);
@@ -135,47 +148,51 @@ export default function Dashboard({ onStartNewForm, onLoadForm, onLogout }: Dash
       </div>
 
       <div className="max-w-7xl mx-auto p-4">
-        {/* Action Bar */}
+        {/* Search Bar - Sticky */}
+        <div className="sticky top-0 z-10 bg-white shadow-md rounded-lg p-4 mb-4">
+          <input
+            type="text"
+            placeholder="Şirket adına, plakaya, MRN numarasına göre ara..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="oregon-input w-full text-lg py-3"
+          />
+        </div>
+
+        {/* Filter Menu and Action Bar */}
         <div className="oregon-card p-6 mb-6">
-          <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
-            <div className="flex-1 w-full md:w-auto">
-              <input
-                type="text"
-                placeholder="Şirket adına göre ara..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="oregon-input w-full"
-              />
+          <div className="flex flex-col gap-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-gray-700">Filtreler</h3>
+              <button
+                onClick={onStartNewForm}
+                className="oregon-button-primary px-6 py-3 whitespace-nowrap"
+              >
+                ➕ Yeni Form
+              </button>
             </div>
-            
+
             <div className="flex gap-2 flex-wrap">
-              {['all', 'draft', 'submitted', 'completed', 'sahada', 'sahadan_cikis', 'x', 'y'].map((status) => (
+              {[
+                { value: 'all', label: 'Tümü', icon: '📋' },
+                { value: 'draft', label: 'Taslak', icon: '📝' },
+                { value: 'sahada', label: 'Sahada', icon: '🚛' },
+                { value: 'completed', label: 'Tamamlandı', icon: '✅' }
+              ].map((filter) => (
                 <button
-                  key={status}
-                  onClick={() => setStatusFilter(status)}
-                  className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    statusFilter === status
-                      ? 'oregon-button-primary'
-                      : 'oregon-button-secondary'
+                  key={filter.value}
+                  onClick={() => setStatusFilter(filter.value)}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                    statusFilter === filter.value
+                      ? 'bg-blue-600 text-white shadow-lg scale-105'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
                 >
-                  {status === 'all' ? 'Tümü' : 
-                   status === 'draft' ? 'Taslak' :
-                   status === 'submitted' ? 'Tamamlandı' :
-                   status === 'completed' ? 'Tamamlandı' :
-                   status === 'sahada' ? 'Sahada' :
-                   status === 'sahadan_cikis' ? 'Sahadan Çıkış' :
-                   status.toUpperCase()}
+                  <span className="mr-1">{filter.icon}</span>
+                  {filter.label}
                 </button>
               ))}
             </div>
-
-            <button
-              onClick={onStartNewForm}
-              className="oregon-button-primary px-6 py-3 whitespace-nowrap"
-            >
-              ➕ Yeni Form
-            </button>
           </div>
         </div>
 

@@ -23,6 +23,7 @@ export interface EnhancedFormData {
   postLoadingWeight?: string;
   
   // Driver Information
+  soforSayisi?: number;
   soforler?: Array<{
     ad?: string;
     tel?: string;
@@ -33,10 +34,16 @@ export interface EnhancedFormData {
   muhurNum?: string;
   yeniMuhurNum?: string;
   muhurKontrol?: {
-    evrakUyum?: boolean;
-    saglamlik?: boolean;
-    gerginlik?: boolean;
-    kilitUygunluk?: boolean;
+    evrakUyum?: boolean | null;
+    saglamlik?: boolean | null;
+    gerginlik?: boolean | null;
+    kilitUygunluk?: boolean | null;
+  };
+  yeniMuhurKontrol?: {
+    evrakUyum?: boolean | null;
+    saglamlik?: boolean | null;
+    gerginlik?: boolean | null;
+    kilitUygunluk?: boolean | null;
   };
   
   // Control Results
