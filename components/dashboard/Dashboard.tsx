@@ -57,15 +57,29 @@ export default function Dashboard({ onStartNewForm, onLoadForm, onLogout }: Dash
       );
     }
 
-    // Filter by status
+    // Filter by status - check both customStatus and base status
     if (statusFilter !== 'all') {
       filtered = filtered.filter(form => {
-        const status = resolveStatus(form);
-        // Map 'submitted' to 'completed' for filtering purposes
+        // Resolved status (customStatus takes precedence)
+        const resolvedStatus = form.customStatus ?? form.status;
+
+        // For 'completed' filter, match both 'completed' and 'submitted'
         if (statusFilter === 'completed') {
-          return status === 'completed' || status === 'submitted';
+          return resolvedStatus === 'completed' || resolvedStatus === 'submitted';
         }
-        return status === statusFilter;
+
+        // For 'sahada' filter, check customStatus
+        if (statusFilter === 'sahada') {
+          return form.customStatus === 'sahada';
+        }
+
+        // For 'draft' filter, check base status
+        if (statusFilter === 'draft') {
+          return form.status === 'draft';
+        }
+
+        // Default: exact match on resolved status
+        return resolvedStatus === statusFilter;
       });
     }
 
