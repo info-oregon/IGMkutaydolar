@@ -7,6 +7,7 @@ import Step2Checklist from "./Step2Checklist";
 import Step3Checklist from "./Step3Checklist";
 import { canEditForm } from "../../lib/auth";
 import { generatePdfFromHtml } from "../../lib/htmlToPdf";
+import { uploadFinalPdf } from "../../lib/storage";
 import { supabase } from "../../lib/supabase";
 
 interface EnhancedFormWizardProps {
@@ -144,36 +145,28 @@ export default function EnhancedFormWizard({ formId, onBack }: EnhancedFormWizar
       // Generate and save PDF
       const { previewUrl: generatedPreviewUrl, pdfBytes } = await generatePdfFromHtml(currentData);
 
-      const timestampForFile = new Date().toISOString().replace(/[:.]/g, '-');
-      const filename = `arac-kontrol-${timestampForFile}.pdf`;
-
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('inspection-pdfs')
-        .upload(filename, pdfBytes, {
-          contentType: 'application/pdf',
-          upsert: false
+      // Ensure form has an ID before uploading PDF
+      let formIdForUpload = currentData.id;
+      if (!formIdForUpload) {
+        // Save form first to get ID
+        formIdForUpload = await EnhancedFormStorageManager.saveForm({
+          ...currentData,
+          status: 'draft'
         });
-
-      if (uploadError) {
-        console.error('❌ Supabase upload error:', uploadError);
-        throw uploadError;
+        setFormData(prev => ({ ...prev, id: formIdForUpload }));
       }
 
-      console.log('✅ PDF uploaded to Supabase:', uploadData);
-
-      const { data: urlData } = supabase.storage
-        .from('inspection-pdfs')
-        .getPublicUrl(filename);
-
-      const supabaseUrl = urlData.publicUrl;
+      // Upload PDF using storage helper
+      const pdfPath = await uploadFinalPdf(formIdForUpload, pdfBytes);
 
       // Save form with selected status
-      const selectedStatus = currentData.customStatus || currentData.status || 'completed';
+      const selectedStatus = currentData.customStatus || 'completed';
       const updatedFormData: EnhancedFormData = {
         ...currentData,
-        pdfUrl: supabaseUrl,
-        status: (selectedStatus === 'draft' ? 'draft' : 'submitted') as 'draft' | 'submitted',
-        customStatus: selectedStatus === 'draft' ? undefined : selectedStatus as any,
+        id: formIdForUpload,
+        pdfUrl: pdfPath,
+        status: 'submitted',
+        customStatus: selectedStatus === 'completed' ? undefined : selectedStatus as any,
         timestamp: new Date().toLocaleString('tr-TR')
       };
 

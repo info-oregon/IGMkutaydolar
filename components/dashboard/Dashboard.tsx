@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { getCurrentUser, signOut, isAdmin } from '../../lib/auth';
 import { EnhancedFormStorageManager, EnhancedFormData } from '../../lib/enhancedFormStorage';
 import { checkSupabaseConnection } from '../../lib/supabase';
+import { getSignedUrl } from '../../lib/storage';
 
 interface DashboardProps {
   onStartNewForm: () => void;
@@ -94,6 +95,16 @@ export default function Dashboard({ onStartNewForm, onLoadForm, onLogout }: Dash
         console.error('Form silinirken hata:', error);
         alert('Form silinirken bir hata oluştu.');
       }
+    }
+  };
+
+  const handleViewPdf = async (pdfPath: string) => {
+    try {
+      const signedUrl = await getSignedUrl(pdfPath, 300); // 5 minutes
+      window.open(signedUrl, '_blank');
+    } catch (error) {
+      console.error('PDF görüntüleme hatası:', error);
+      alert('PDF açılırken bir hata oluştu.');
     }
   };
 
@@ -294,14 +305,12 @@ export default function Dashboard({ onStartNewForm, onLoadForm, onLogout }: Dash
                       </button>
                       
                       {isFinalized && form.pdfUrl && (
-                        <a
-                          href={form.pdfUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="oregon-button-secondary px-4 py-2 text-sm text-center"
+                        <button
+                          onClick={() => handleViewPdf(form.pdfUrl!)}
+                          className="oregon-button-secondary px-4 py-2 text-sm"
                         >
-                          📄 PDF İndir
-                        </a>
+                          📄 PDF Görüntüle
+                        </button>
                       )}
                       
                       {(userIsAdmin || form.status === 'draft') && (

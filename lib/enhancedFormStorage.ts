@@ -1,6 +1,7 @@
 import { supabase } from './supabase';
 import { authManager } from './auth';
 import type { ControlRow } from '../types/form';
+import { monitorQuery, getUserFriendlyError } from './monitoring';
 
 export interface EnhancedFormData {
   // Basic Information
@@ -368,32 +369,41 @@ export class EnhancedFormStorageManager {
         throw new Error('Authentication required');
       }
 
-      let query = supabase
-        .from('forms')
-        .select('id, status, custom_status, form_data, pdf_url, company_id, inspector_id, created_at, updated_at')
-        .order('updated_at', { ascending: false });
+      const columns = ['id', 'status', 'custom_status', 'form_data', 'pdf_url', 'company_id', 'inspector_id', 'created_at', 'updated_at'];
 
-      // Apply filters
-      if (filters?.status) {
-        query = query.eq('status', filters.status);
-      }
+      const { data, error } = await monitorQuery(
+        'getForms',
+        'forms',
+        columns,
+        async () => {
+          let query = supabase
+            .from('forms')
+            .select(columns.join(', '))
+            .order('updated_at', { ascending: false });
 
-      if (filters?.companyId) {
-        query = query.eq('company_id', filters.companyId);
-      }
+          // Apply filters
+          if (filters?.status) {
+            query = query.eq('status', filters.status);
+          }
 
-      if (filters?.limit) {
-        query = query.limit(filters.limit);
-      }
+          if (filters?.companyId) {
+            query = query.eq('company_id', filters.companyId);
+          }
 
-      const { data, error } = await query;
+          if (filters?.limit) {
+            query = query.limit(filters.limit);
+          }
+
+          return await query;
+        }
+      );
 
       if (error) throw error;
 
       console.log('✅ Forms fetched:', data?.length, 'forms');
 
       // Transform data
-      return (data || []).map(form => ({
+      return (data || []).map((form: any) => ({
         ...form.form_data,
         id: form.id,
         status: form.status,
