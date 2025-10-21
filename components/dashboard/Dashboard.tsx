@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { getCurrentUser, signOut, isAdmin } from '../../lib/auth';
 import { EnhancedFormStorageManager, EnhancedFormData } from '../../lib/enhancedFormStorage';
+import { checkSupabaseConnection } from '../../lib/supabase';
 
 interface DashboardProps {
   onStartNewForm: () => void;
@@ -15,17 +16,24 @@ export default function Dashboard({ onStartNewForm, onLoadForm, onLogout }: Dash
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [connectionStatus, setConnectionStatus] = useState<{ success: boolean; error?: any } | null>(null);
 
   const user = getCurrentUser();
   const userIsAdmin = isAdmin();
 
   useEffect(() => {
+    checkConnection();
     loadForms();
   }, []);
 
   useEffect(() => {
     filterForms();
   }, [forms, searchTerm, statusFilter]);
+
+  const checkConnection = async () => {
+    const result = await checkSupabaseConnection();
+    setConnectionStatus(result);
+  };
 
   const loadForms = async () => {
     try {
@@ -136,6 +144,11 @@ export default function Dashboard({ onStartNewForm, onLoadForm, onLogout }: Dash
                 Hoş geldiniz, {user?.name || user?.email}
                 {userIsAdmin && <span className="ml-2 bg-white/20 px-2 py-1 rounded text-xs">👑 Admin</span>}
               </div>
+              {connectionStatus && (
+                <div className={`text-xs mt-1 ${connectionStatus.success ? 'text-green-300' : 'text-red-300'}`}>
+                  {connectionStatus.success ? '✅ Supabase Bağlı' : '❌ Supabase Bağlantı Hatası'}
+                </div>
+              )}
             </div>
             <button
               onClick={handleSignOut}

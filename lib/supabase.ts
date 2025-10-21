@@ -1,15 +1,39 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl =
-  process.env.NEXT_PUBLIC_SUPABASE_URL ||
-  'https://zkkbandockklkohihplp.supabase.co';
-const supabaseAnonKey =
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpra2JhbmRvY2trbGtvaGlocGxwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg3MDYwMTYsImV4cCI6MjA3NDI4MjAxNn0.bFCFKAOw7YKq7PPouLKBs_fe6bZyGARthYFp4xaQzWA';
+// Use environment variables from .env
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
+if (!supabaseUrl || !supabaseAnonKey) {
+  throw new Error('Missing Supabase environment variables');
+}
+
+// Single Supabase client instance
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-// Auth fonksiyonlarını şimdilik boş stub yapabilirsin
+// Health check function
+export async function checkSupabaseConnection() {
+  try {
+    const { data, error, status } = await supabase
+      .from('forms')
+      .select('id')
+      .limit(1);
+
+    console.log('🔍 Supabase health check:', {
+      status,
+      error: error?.message || null,
+      dataReceived: !!data,
+      url: supabaseUrl
+    });
+
+    return { success: !error, error, status };
+  } catch (err) {
+    console.error('❌ Supabase connection check failed:', err);
+    return { success: false, error: err };
+  }
+}
+
+// Auth stub functions
 export const auth = {
   signUp: async () => null,
   signIn: async () => null,

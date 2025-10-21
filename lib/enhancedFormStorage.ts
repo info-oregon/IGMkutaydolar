@@ -268,7 +268,7 @@ export class EnhancedFormStorageManager {
             ...saveData,
             created_at: new Date().toISOString()
           })
-          .select()
+          .select('id')
           .single();
 
         if (error) throw error;
@@ -341,7 +341,7 @@ export class EnhancedFormStorageManager {
             ...saveData,
             created_at: new Date().toISOString()
           })
-          .select()
+          .select('id')
           .single();
 
         if (error) throw error;
@@ -370,7 +370,7 @@ export class EnhancedFormStorageManager {
 
       let query = supabase
         .from('forms')
-        .select('*')
+        .select('id, status, custom_status, form_data, pdf_url, company_id, inspector_id, created_at, updated_at')
         .order('updated_at', { ascending: false });
 
       // Apply filters
@@ -417,7 +417,7 @@ export class EnhancedFormStorageManager {
 
       const { data, error } = await supabase
         .from('forms')
-        .select('*')
+        .select('id, status, custom_status, form_data, pdf_url, company_id, inspector_id, created_at, updated_at')
         .eq('id', formId)
         .single();
 
@@ -525,7 +525,7 @@ export class EnhancedFormStorageManager {
       // Get all forms for statistics
       const { data: allForms, error } = await supabase
         .from('forms')
-        .select('*')
+        .select('id, status, custom_status, form_data, company_id, inspector_id, created_at, updated_at, pdf_url')
         .order('updated_at', { ascending: false });
 
       if (error) throw error;
