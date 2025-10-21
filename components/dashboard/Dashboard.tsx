@@ -2,8 +2,7 @@
 import { useState, useEffect } from 'react';
 import { getCurrentUser, signOut, isAdmin } from '../../lib/auth';
 import { EnhancedFormStorageManager, EnhancedFormData } from '../../lib/enhancedFormStorage';
-import { checkSupabaseHealth } from '../../lib/supabase';
-import { getSignedUrl } from '../../lib/storage';
+import { checkSupabaseConnection } from '../../lib/supabase';
 
 interface DashboardProps {
   onStartNewForm: () => void;
@@ -17,12 +16,7 @@ export default function Dashboard({ onStartNewForm, onLoadForm, onLogout }: Dash
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [connectionStatus, setConnectionStatus] = useState<{
-    success: boolean;
-    companies: { success: boolean; error?: string; count?: number };
-    forms: { success: boolean; error?: string; count?: number };
-    errors: string[];
-  } | null>(null);
+  const [connectionStatus, setConnectionStatus] = useState<{ success: boolean; error?: any } | null>(null);
 
   const user = getCurrentUser();
   const userIsAdmin = isAdmin();
@@ -37,7 +31,7 @@ export default function Dashboard({ onStartNewForm, onLoadForm, onLogout }: Dash
   }, [forms, searchTerm, statusFilter]);
 
   const checkConnection = async () => {
-    const result = await checkSupabaseHealth();
+    const result = await checkSupabaseConnection();
     setConnectionStatus(result);
   };
 
@@ -103,16 +97,6 @@ export default function Dashboard({ onStartNewForm, onLoadForm, onLogout }: Dash
     }
   };
 
-  const handleViewPdf = async (pdfPath: string) => {
-    try {
-      const signedUrl = await getSignedUrl(pdfPath, 300); // 5 minutes
-      window.open(signedUrl, '_blank');
-    } catch (error) {
-      console.error('PDF görüntüleme hatası:', error);
-      alert('PDF açılırken bir hata oluştu.');
-    }
-  };
-
   const getStatusBadge = (status: string) => {
     const badges = {
       draft: { class: 'oregon-warning', text: 'Taslak 📝' },
@@ -161,20 +145,8 @@ export default function Dashboard({ onStartNewForm, onLoadForm, onLogout }: Dash
                 {userIsAdmin && <span className="ml-2 bg-white/20 px-2 py-1 rounded text-xs">👑 Admin</span>}
               </div>
               {connectionStatus && (
-                <div className="text-xs mt-1 space-y-1">
-                  <div className={connectionStatus.success ? 'text-green-300' : 'text-red-300'}>
-                    {connectionStatus.success ? '✅ Supabase Bağlı' : '⚠️ Supabase Bağlantı Sorunu'}
-                  </div>
-                  {!connectionStatus.success && connectionStatus.errors.length > 0 && (
-                    <div className="text-xs text-red-200">
-                      {connectionStatus.errors.join(' | ')}
-                    </div>
-                  )}
-                  {connectionStatus.success && (
-                    <div className="text-xs text-white/70">
-                      Companies: {connectionStatus.companies.count} | Forms: {connectionStatus.forms.count}
-                    </div>
-                  )}
+                <div className={`text-xs mt-1 ${connectionStatus.success ? 'text-green-300' : 'text-red-300'}`}>
+                  {connectionStatus.success ? '✅ Supabase Bağlı' : '❌ Supabase Bağlantı Hatası'}
                 </div>
               )}
             </div>
@@ -322,12 +294,14 @@ export default function Dashboard({ onStartNewForm, onLoadForm, onLogout }: Dash
                       </button>
                       
                       {isFinalized && form.pdfUrl && (
-                        <button
-                          onClick={() => handleViewPdf(form.pdfUrl!)}
-                          className="oregon-button-secondary px-4 py-2 text-sm"
+                        <a
+                          href={form.pdfUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="oregon-button-secondary px-4 py-2 text-sm text-center"
                         >
-                          📄 PDF Görüntüle
-                        </button>
+                          📄 PDF İndir
+                        </a>
                       )}
                       
                       {(userIsAdmin || form.status === 'draft') && (
