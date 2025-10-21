@@ -22,7 +22,7 @@ export default function Step1VehicleInfo({ data, setData, next, onBack, isReadOn
   const [companies, setCompanies] = useState<Company[]>([]);
   const [filteredCompanies, setFilteredCompanies] = useState<Company[]>([]);
   const [showDropdown, setShowDropdown] = useState(false);
-  const [selectedCompanyId, setSelectedCompanyId] = useState<string | undefined>(data?.companyId || undefined);
+  const [selectedCompanyId, setSelectedCompanyId] = useState(data?.companyId || "");
   const [isLoadingCompanies, setIsLoadingCompanies] = useState(false);
 
   // Şirketleri yükle
@@ -52,11 +52,11 @@ export default function Step1VehicleInfo({ data, setData, next, onBack, isReadOn
   // Şirket arama
   const handleCompanySearch = (searchTerm: string) => {
     setTasiyici(searchTerm);
-
+    
     if (searchTerm.trim() === '') {
       setFilteredCompanies(companies);
       setShowDropdown(false);
-      setSelectedCompanyId(undefined);
+      setSelectedCompanyId("");
       return;
     }
 
@@ -65,7 +65,7 @@ export default function Step1VehicleInfo({ data, setData, next, onBack, isReadOn
     );
     setFilteredCompanies(filtered);
     setShowDropdown(filtered.length > 0);
-
+    
     console.log('Şirket arama:', searchTerm, 'Bulunan:', filtered.length);
   };
 
