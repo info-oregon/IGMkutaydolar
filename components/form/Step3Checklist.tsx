@@ -162,7 +162,7 @@ export default function Step3Checklist({
   const [errors, setErrors] = useState<string[]>([]);
   const [hasPreview, setHasPreview] = useState(false);
   const [photos, setPhotos] = useState<string[]>(data.fotoListesi || []);
-  const [manualStatus, setManualStatus] = useState<string>(data.customStatus || data.status || 'completed');
+  const [manualStatus, setManualStatus] = useState<string>(data.customStatus || 'draft');
   
   // New Seal Information State
   const [yeniMuhurNum, setYeniMuhurNum] = useState<string>(data.yeniMuhurNum || "");
@@ -300,8 +300,8 @@ const saveSignature = () => {
         cikis_muhurSaglamlik: yeniMuhurKontrol?.saglamlik ?? null,
         cikis_muhurGerginlik: yeniMuhurKontrol?.gerginlik ?? null,
         cikis_muhurKilit: yeniMuhurKontrol?.kilitUygunluk ?? null,
-        status: manualStatus === 'draft' ? 'draft' : 'submitted',
-        customStatus: manualStatus === 'draft' ? undefined : manualStatus as any
+        status: manualStatus === 'completed' ? 'completed' : 'draft',
+        customStatus: manualStatus as 'draft' | 'field' | 'completed'
       };
 
       FIZIKI_FIELD_KEYS.forEach((field, index) => {
@@ -823,7 +823,7 @@ const saveSignature = () => {
             disabled={isReadOnly}
           >
             <option value="draft">Taslak 📝</option>
-            <option value="sahada">Sahada 🚛</option>
+            <option value="field">Sahada 🚛</option>
             <option value="completed">Tamamlandı ✅</option>
           </select>
         </div>
