@@ -241,13 +241,20 @@ export class EnhancedFormStorageManager {
       const status = validation.isValid ? 'submitted' : 'draft';
       const customStatus = validation.isValid ? 'completed' : null;
 
+      // Validate UUID fields before saving
+      const isValidUUID = (value: any): boolean => {
+        if (!value || value === '') return false;
+        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+        return uuidRegex.test(value);
+      };
+
       const saveData = {
         form_data: formData,
         status,
         custom_status: customStatus,
         updated_at: new Date().toISOString(),
-        company_id: formData.companyId || null,
-        inspector_id: null // Will be set if user system is implemented
+        company_id: isValidUUID(formData.companyId) ? formData.companyId : null,
+        inspector_id: isValidUUID(formData.inspectorId) ? formData.inspectorId : null
       };
 
       if (formData.id) {
@@ -309,13 +316,20 @@ export class EnhancedFormStorageManager {
         }
       }
 
+      // Validate UUID fields before saving
+      const isValidUUID = (value: any): boolean => {
+        if (!value || value === '') return false;
+        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+        return uuidRegex.test(value);
+      };
+
       const saveData = {
         form_data: formData,
         status,
         custom_status: customStatus,
         updated_at: new Date().toISOString(),
-        company_id: formData.companyId || null,
-        inspector_id: formData.inspectorId || null,
+        company_id: isValidUUID(formData.companyId) ? formData.companyId : null,
+        inspector_id: isValidUUID(formData.inspectorId) ? formData.inspectorId : null,
         pdf_url: formData.pdfUrl || null
       };
 
