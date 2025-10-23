@@ -3,7 +3,6 @@ import { authManager } from './auth';
 import type { ControlRow } from '../types/form';
 
 export interface EnhancedFormData {
-  // Basic Information
   id?: string;
   mrnNo?: string;
   rejimHakSahibiAdi?: string;
@@ -15,22 +14,19 @@ export interface EnhancedFormData {
   dorsePlaka?: string;
   konteynerNo?: string;
   kamyonPlaka?: string;
-  
-  // Enhanced fields
+
   loadingLocation?: string;
   yuklemeTarihi?: string;
   preLoadingWeight?: string;
   postLoadingWeight?: string;
-  
-  // Driver Information
+
   soforSayisi?: number;
   soforler?: Array<{
     ad?: string;
     tel?: string;
     imza?: string;
   }>;
-  
-  // Seal Information
+
   muhurNum?: string;
   yeniMuhurNum?: string;
   muhurKontrol?: {
@@ -45,29 +41,25 @@ export interface EnhancedFormData {
     gerginlik?: boolean | null;
     kilitUygunluk?: boolean | null;
   };
-  
-  // Control Results
+
   fizikiKontrol?: ControlRow[];
   fizikiAciklama?: string[];
   zulaKontrol?: ControlRow[];
   zulaAciklama?: string[];
-  
-  // Inspector Information
+
   kontrolEdenAd?: string;
   kontrolEdenImza?: string;
   timestamp?: string;
-  
-  // General Result
+
   genelSonuc?: string;
-  
-  // Photos
+
   fotoListesi?: string[];
-  
-  // Enhanced metadata
+
   status: 'draft' | 'submitted';
   customStatus?: 'completed' | 'sahada' | 'sahadan_cikis' | 'x' | 'y';
   companyId?: string;
   inspectorId?: string;
+  pdfPath?: string;
   pdfUrl?: string;
   createdAt?: string;
   updatedAt?: string;
@@ -89,10 +81,9 @@ export interface Inspector {
 }
 
 export class EnhancedFormStorageManager {
-  // Form validation with enhanced logic
-  static validateForm(formData: EnhancedFormData): { 
-    isValid: boolean; 
-    errors: string[]; 
+  static validateForm(formData: EnhancedFormData): {
+    isValid: boolean;
+    errors: string[];
     warnings: string[];
     completionLevel: number;
   } {
@@ -101,10 +92,6 @@ export class EnhancedFormStorageManager {
     let completedFields = 0;
     let totalFields = 0;
 
-    console.log('🔍 Enhanced form validation starting...');
-
-    // TEMPORARILY DISABLED: Critical fields validation
-    // Allow forms to proceed even with empty critical fields
     const criticalFields = [
       { key: 'tasiyiciFirma', label: 'Taşıyıcı firma' },
       { key: 'aracTuru', label: 'Araç türü' },
@@ -119,10 +106,8 @@ export class EnhancedFormStorageManager {
       if (value && (typeof value !== 'string' || value.trim())) {
         completedFields++;
       }
-      // No errors pushed - validation temporarily disabled
     });
 
-    // Important fields (warnings if missing)
     const importantFields = [
       { key: 'cekiciPlaka', label: 'Çekici plaka' },
       { key: 'dorsePlaka', label: 'Dorse plaka' },
@@ -140,27 +125,17 @@ export class EnhancedFormStorageManager {
       }
     });
 
-    // Control checks validation
-    totalFields += 2; // Fiziki and Zula controls
-    
-    // TEMPORARILY DISABLED: Fiziki kontrol validation
-    const hasChecklistSelection = (list: any): boolean => {
-      if (!Array.isArray(list)) {
-        return false;
-      }
+    totalFields += 2;
 
+    const hasChecklistSelection = (list: any): boolean => {
+      if (!Array.isArray(list)) return false;
       return list.some(item => {
         if (item === null || item === undefined) return false;
-
         if (typeof item === 'string') {
           const normalized = item.trim().toLowerCase();
           return normalized === 'uygun' || normalized === 'uygunsuz';
         }
-
-        if (typeof item === 'boolean') {
-          return true;
-        }
-
+        if (typeof item === 'boolean') return true;
         if (typeof item === 'object') {
           if ('uygun' in item) {
             const value = (item as ControlRow).uygun;
@@ -168,29 +143,15 @@ export class EnhancedFormStorageManager {
           }
           return Object.values(item).some(Boolean);
         }
-
         return false;
       });
     };
 
-    const fizikiValid = hasChecklistSelection(formData.fizikiKontrol);
-    
-    if (fizikiValid) {
-      completedFields++;
-    }
-    // No error for missing fiziki kontrol - validation temporarily disabled
+    if (hasChecklistSelection(formData.fizikiKontrol)) completedFields++;
+    if (hasChecklistSelection(formData.zulaKontrol)) completedFields++;
 
-    // TEMPORARILY DISABLED: Zula kontrol validation
-    const zulaValid = hasChecklistSelection(formData.zulaKontrol);
-    
-    if (zulaValid) {
-      completedFields++;
-    }
-    // No error for missing zula kontrol - validation temporarily disabled
-
-    // Driver information
     totalFields++;
-    if (formData.soforler && formData.soforler.length > 0 && 
+    if (formData.soforler && formData.soforler.length > 0 &&
         formData.soforler.some(s => s.ad && s.ad.trim())) {
       completedFields++;
     } else {
@@ -198,24 +159,15 @@ export class EnhancedFormStorageManager {
     }
 
     const completionLevel = Math.round((completedFields / totalFields) * 100);
-    const isValid = true; // TEMPORARILY ALWAYS VALID - validation disabled
 
-    console.log('✅ Enhanced validation result:', {
-      isValid,
-      errors: errors.length,
-      warnings: warnings.length,
-      completionLevel: `${completionLevel}%`
-    });
-
-    return { 
-      isValid: true, // Always return valid
-      errors: [], // No blocking errors
-      warnings, 
-      completionLevel 
+    return {
+      isValid: true,
+      errors: [],
+      warnings,
+      completionLevel
     };
   }
 
-  // Auto-save with enhanced logic
   static async autoSave(formData: Partial<EnhancedFormData>): Promise<string | null> {
     try {
       const user = authManager.getCurrentUser();
@@ -224,18 +176,15 @@ export class EnhancedFormStorageManager {
         return null;
       }
 
-      // Check if form has meaningful data
-      const hasData = formData.tasiyiciFirma || 
-                     formData.aracTuru || 
-                     formData.cekiciPlaka || 
+      const hasData = formData.tasiyiciFirma ||
+                     formData.aracTuru ||
+                     formData.cekiciPlaka ||
                      formData.soforler?.some(s => s.ad);
 
       if (!hasData) {
         console.log('⚠️ Auto-save skipped: No meaningful data');
         return null;
       }
-
-      console.log('🔄 Auto-saving form...');
 
       const validation = this.validateForm(formData as EnhancedFormData);
       const status = validation.isValid ? 'submitted' : 'draft';
@@ -247,32 +196,32 @@ export class EnhancedFormStorageManager {
         custom_status: customStatus,
         updated_at: new Date().toISOString(),
         company_id: formData.companyId || null,
-        inspector_id: null // Will be set if user system is implemented
+        inspector_id: null,
+        tasiyici_firma: formData.tasiyiciFirma || null,
+        arac_turu: formData.aracTuru || null,
+        cekici_plaka: formData.cekiciPlaka || null,
+        genel_sonuc: formData.genelSonuc || null
       };
 
       if (formData.id) {
-        // Update existing form
         const { error } = await supabase
           .from('forms')
           .update(saveData)
           .eq('id', formData.id);
 
         if (error) throw error;
-        console.log('✅ Form auto-saved (updated):', formData.id);
         return formData.id;
       } else {
-        // Create new form
         const { data, error } = await supabase
           .from('forms')
           .insert({
             ...saveData,
             created_at: new Date().toISOString()
           })
-          .select()
+          .select('id')
           .single();
 
         if (error) throw error;
-        console.log('✅ Form auto-saved (created):', data.id);
         return data.id;
       }
     } catch (error) {
@@ -281,25 +230,19 @@ export class EnhancedFormStorageManager {
     }
   }
 
-  // Save form with status determination
   static async saveForm(formData: EnhancedFormData, forceStatus?: string): Promise<string> {
     try {
-      console.log('🔄 Saving form with enhanced logic...');
-
       const user = authManager.getCurrentUser();
       const validation = this.validateForm(formData);
-      
-      // Determine status
+
       let status = forceStatus || (validation.isValid ? 'submitted' : 'draft');
       let customStatus = undefined;
-      
-      // Map custom statuses to database-compatible values
+
       if (forceStatus && !['draft', 'submitted'].includes(forceStatus)) {
         customStatus = forceStatus as any;
-        status = 'submitted'; // Store as submitted in database
+        status = 'submitted';
       }
-      
-      // Admin can force any status
+
       if (user?.role === 'admin' && forceStatus) {
         if (['draft', 'submitted'].includes(forceStatus)) {
           status = forceStatus;
@@ -316,11 +259,15 @@ export class EnhancedFormStorageManager {
         updated_at: new Date().toISOString(),
         company_id: formData.companyId || null,
         inspector_id: formData.inspectorId || null,
-        pdf_url: formData.pdfUrl || null
+        pdf_path: formData.pdfPath || null,
+        pdf_url: formData.pdfUrl || null,
+        tasiyici_firma: formData.tasiyiciFirma || null,
+        arac_turu: formData.aracTuru || null,
+        cekici_plaka: formData.cekiciPlaka || null,
+        genel_sonuc: formData.genelSonuc || null
       };
 
       if (formData.id) {
-        // Check edit permissions
         const existingForm = await this.getForm(formData.id);
         if (existingForm && !authManager.canEditForm(existingForm.status)) {
           throw new Error('Bu formu düzenleme yetkiniz bulunmuyor');
@@ -332,7 +279,6 @@ export class EnhancedFormStorageManager {
           .eq('id', formData.id);
 
         if (error) throw error;
-        console.log('✅ Form updated:', formData.id, 'Status:', status);
         return formData.id;
       } else {
         const { data, error } = await supabase
@@ -341,11 +287,10 @@ export class EnhancedFormStorageManager {
             ...saveData,
             created_at: new Date().toISOString()
           })
-          .select()
+          .select('id')
           .single();
 
         if (error) throw error;
-        console.log('✅ Form created:', data.id, 'Status:', status);
         return data.id;
       }
     } catch (error) {
@@ -354,15 +299,12 @@ export class EnhancedFormStorageManager {
     }
   }
 
-  // Get forms with role-based filtering
   static async getForms(filters?: {
     status?: string;
     companyId?: string;
     limit?: number;
   }): Promise<EnhancedFormData[]> {
     try {
-      console.log('🔄 Fetching forms with filters:', filters);
-
       const user = authManager.getCurrentUser();
       if (!user) {
         throw new Error('Authentication required');
@@ -370,10 +312,9 @@ export class EnhancedFormStorageManager {
 
       let query = supabase
         .from('forms')
-        .select('*')
+        .select('id,status,custom_status,created_at,updated_at,pdf_path,pdf_url,tasiyici_firma,cekici_plaka,arac_turu,genel_sonuc,company_id,inspector_id')
         .order('updated_at', { ascending: false });
 
-      // Apply filters
       if (filters?.status) {
         query = query.eq('status', filters.status);
       }
@@ -390,11 +331,7 @@ export class EnhancedFormStorageManager {
 
       if (error) throw error;
 
-      console.log('✅ Forms fetched:', data?.length, 'forms');
-
-      // Transform data
       return (data || []).map(form => ({
-        ...form.form_data,
         id: form.id,
         status: form.status,
         customStatus: form.custom_status,
@@ -402,7 +339,12 @@ export class EnhancedFormStorageManager {
         updatedAt: form.updated_at,
         companyId: form.company_id,
         inspectorId: form.inspector_id,
-        pdfUrl: form.pdf_url
+        pdfPath: form.pdf_path,
+        pdfUrl: form.pdf_url,
+        tasiyiciFirma: form.tasiyici_firma,
+        cekiciPlaka: form.cekici_plaka,
+        aracTuru: form.arac_turu,
+        genelSonuc: form.genel_sonuc
       }));
     } catch (error) {
       console.error('❌ Forms fetch failed:', error);
@@ -410,11 +352,8 @@ export class EnhancedFormStorageManager {
     }
   }
 
-  // Get single form with permission check
   static async getForm(formId: string): Promise<EnhancedFormData | null> {
     try {
-      console.log('🔄 Fetching form:', formId);
-
       const { data, error } = await supabase
         .from('forms')
         .select('*')
@@ -423,17 +362,14 @@ export class EnhancedFormStorageManager {
 
       if (error) {
         if (error.code === 'PGRST116') {
-          return null; // Form not found
+          return null;
         }
         throw error;
       }
 
-      // Check view permissions
       if (!authManager.canViewForm(data.status)) {
         throw new Error('Bu formu görüntüleme yetkiniz bulunmuyor');
       }
-
-      console.log('✅ Form fetched:', formId);
 
       return {
         ...data.form_data,
@@ -444,6 +380,7 @@ export class EnhancedFormStorageManager {
         updatedAt: data.updated_at,
         companyId: data.company_id,
         inspectorId: data.inspector_id,
+        pdfPath: data.pdf_path,
         pdfUrl: data.pdf_url
       };
     } catch (error) {
@@ -452,23 +389,18 @@ export class EnhancedFormStorageManager {
     }
   }
 
-  // Delete form with permission check
   static async deleteForm(formId: string): Promise<void> {
     try {
-      console.log('🔄 Deleting form:', formId);
-
       const user = authManager.getCurrentUser();
       if (!user) {
         throw new Error('Authentication required');
       }
 
-      // Get form to check permissions
       const existingForm = await this.getForm(formId);
       if (!existingForm) {
         throw new Error('Form bulunamadı');
       }
 
-      // Only admin or draft forms can be deleted
       if (user.role !== 'admin' && existingForm.status !== 'draft' && existingForm.status !== 'submitted') {
         throw new Error('Sadece taslak formlar silinebilir');
       }
@@ -479,34 +411,34 @@ export class EnhancedFormStorageManager {
         .eq('id', formId);
 
       if (error) throw error;
-      console.log('✅ Form deleted:', formId);
     } catch (error) {
       console.error('❌ Form deletion failed:', error);
       throw error;
     }
   }
 
-  // Get companies
   static async getCompanies(): Promise<Company[]> {
     try {
-      console.log('🔄 Fetching companies...');
-      
       const { data, error } = await supabase
         .from('companies')
         .select('id, name')
-        .order('name');
+        .order('name')
+        .limit(100);
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Companies fetch failed:', error);
+        console.log('🔍 Check RLS policies or Supabase keys');
+        throw error;
+      }
 
       console.log('✅ Companies fetched:', data?.length, 'companies');
       return data || [];
     } catch (error) {
-      console.error('❌ Companies fetch failed:', error);
+      console.error('❌ Companies health check failed:', error);
       return [];
     }
   }
 
-  // Get dashboard statistics
   static async getDashboardStats(): Promise<{
     totalForms: number;
     draftForms: number;
@@ -515,52 +447,37 @@ export class EnhancedFormStorageManager {
     recentForms: EnhancedFormData[];
   }> {
     try {
-      console.log('🔄 Fetching dashboard statistics...');
-
       const user = authManager.getCurrentUser();
       if (!user) {
         throw new Error('Authentication required');
       }
 
-      // Get all forms for statistics
-      const { data: allForms, error } = await supabase
+      const { count: totalCount } = await supabase
         .from('forms')
-        .select('*')
-        .order('updated_at', { ascending: false });
+        .select('*', { count: 'exact', head: true });
 
-      if (error) throw error;
+      const { count: draftCount } = await supabase
+        .from('forms')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'draft');
 
-      const totalForms = allForms?.length || 0;
-      const draftForms = allForms?.filter(f => f.status === 'draft').length || 0;
-      const completedForms = allForms?.filter(f => f.status === 'submitted' || f.custom_status === 'completed').length || 0;
-      const sahadaForms = allForms?.filter(f => f.custom_status === 'sahada').length || 0;
+      const { count: completedCount } = await supabase
+        .from('forms')
+        .select('*', { count: 'exact', head: true })
+        .or('status.eq.submitted,custom_status.eq.completed');
 
-      // Get recent forms (last 5)
-      const recentFormsData = allForms?.slice(0, 5) || [];
-      const recentForms: EnhancedFormData[] = recentFormsData.map(form => ({
-        ...form.form_data,
-        id: form.id,
-        status: form.status,
-        customStatus: form.custom_status,
-        createdAt: form.created_at,
-        updatedAt: form.updated_at,
-        companyId: form.company_id,
-        inspectorId: form.inspector_id,
-        pdfUrl: form.pdf_url
-      }));
+      const { count: sahadaCount } = await supabase
+        .from('forms')
+        .select('*', { count: 'exact', head: true })
+        .eq('custom_status', 'sahada');
 
-      console.log('✅ Dashboard stats fetched:', {
-        totalForms,
-        draftForms,
-        completedForms,
-        sahadaForms
-      });
+      const recentForms = await this.getForms({ limit: 5 });
 
       return {
-        totalForms,
-        draftForms,
-        completedForms,
-        sahadaForms,
+        totalForms: totalCount || 0,
+        draftForms: draftCount || 0,
+        completedForms: completedCount || 0,
+        sahadaForms: sahadaCount || 0,
         recentForms
       };
     } catch (error) {

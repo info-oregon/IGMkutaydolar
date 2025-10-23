@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { getCurrentUser, signOut, isAdmin } from '../../lib/auth';
 import { EnhancedFormStorageManager, EnhancedFormData } from '../../lib/enhancedFormStorage';
+import { getSignedUrl } from '../../lib/storage';
 
 interface DashboardProps {
   onStartNewForm: () => void;
@@ -86,6 +87,22 @@ export default function Dashboard({ onStartNewForm, onLoadForm, onLogout }: Dash
         console.error('Form silinirken hata:', error);
         alert('Form silinirken bir hata oluştu.');
       }
+    }
+  };
+
+  const handleViewPdf = async (form: EnhancedFormData) => {
+    try {
+      if (form.pdfPath) {
+        const signedUrl = await getSignedUrl(form.pdfPath, 60);
+        window.open(signedUrl, '_blank');
+      } else if (form.pdfUrl) {
+        window.open(form.pdfUrl, '_blank');
+      } else {
+        alert('PDF bulunamadı');
+      }
+    } catch (error) {
+      console.error('PDF görüntülenirken hata:', error);
+      alert('PDF görüntülenirken bir hata oluştu.');
     }
   };
 
@@ -280,15 +297,13 @@ export default function Dashboard({ onStartNewForm, onLoadForm, onLogout }: Dash
                         {isFinalized ? 'Görüntüle' : 'Devam Et'}
                       </button>
                       
-                      {isFinalized && form.pdfUrl && (
-                        <a
-                          href={form.pdfUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
+                      {isFinalized && (form.pdfPath || form.pdfUrl) && (
+                        <button
+                          onClick={() => handleViewPdf(form)}
                           className="oregon-button-secondary px-4 py-2 text-sm text-center"
                         >
-                          📄 PDF İndir
-                        </a>
+                          📄 PDF Görüntüle
+                        </button>
                       )}
                       
                       {(userIsAdmin || form.status === 'draft') && (
