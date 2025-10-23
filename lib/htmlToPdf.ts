@@ -21,7 +21,7 @@ export async function generatePdfFromHtml(formData: EnhancedFormData): Promise<{
   });
 
   const canvas = await html2canvas(container, {
-    scale: 2,
+    scale: 3,
     useCORS: true,
     allowTaint: true,
   });

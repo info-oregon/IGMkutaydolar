@@ -1,3 +1,4 @@
+import { supabase } from './supabase';
 
 export interface User {
   id: string;
