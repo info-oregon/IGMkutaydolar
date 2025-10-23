@@ -13,7 +13,8 @@ const styles: { [key: string]: React.CSSProperties } = {
     backgroundColor: 'white',
     width: '210mm',
     minHeight: '297mm',
-    padding: '0.7cm',
+    padding: '0.5cm 1.5cm',
+    paddingTop: '0.2cm',
     fontFamily: "'Roboto', sans-serif",
     color: 'black',
     boxSizing: 'border-box',
@@ -95,11 +96,16 @@ const PdfTemplate: React.FC<PdfTemplateProps> = ({ formData }) => {
 
   return (
     <div style={styles.page}>
+      {/* Logo at top-left */}
+      <div style={{ marginBottom: '8px', marginTop: '4px' }}>
+        <img src="/image002.png" alt="Oregon Logo" style={{ width: '100px', height: 'auto' }} />
+      </div>
+
        <table style={styles.table}>
         <tbody>
           <tr style={{height: '40px'}}>
             <td colSpan={7} style={{...styles.td, borderRight:'none', verticalAlign:'middle', paddingLeft: '5px'}}>
-              <img src="/ARAÇ GÜVENLİK KONTROL FORMU_dosyalar/image001.png" alt="Oregon Logo" style={styles.logo} />
+              {/* Empty cell - logo moved to top */}
             </td>
             <td colSpan={8} style={{...styles.td, fontWeight: 700, textAlign:'center', fontSize: '11pt', borderLeft:'none', borderRight:'none'}}>
                 ARAÇ GÜVENLİK KONTROL FORMU

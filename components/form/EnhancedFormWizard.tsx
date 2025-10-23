@@ -189,16 +189,16 @@ export default function EnhancedFormWizard({ formId, onBack }: EnhancedFormWizar
   };
 
   const handleStatusChange = async (newStatus: string) => {
-    if (!userIsAdmin) {
-      alert('Sadece admin kullanıcılar form durumunu değiştirebilir.');
+    if (formData.status === 'completed') {
+      alert('Tamamlanmış formların durumu değiştirilemez.');
       return;
     }
 
     try {
       const updatedFormData = { ...formData, status: newStatus as any };
-      await EnhancedFormStorageManager.saveForm(updatedFormData, newStatus);
+      await EnhancedFormStorageManager.saveForm(updatedFormData);
       setFormData(updatedFormData);
-      alert(`Form durumu "${newStatus}" olarak güncellendi.`);
+      console.log(`✅ Form durumu "${newStatus}" olarak güncellendi.`);
     } catch (error) {
       console.error('❌ Status update failed:', error);
       alert('Durum güncellenirken bir hata oluştu.');
@@ -278,27 +278,32 @@ export default function EnhancedFormWizard({ formId, onBack }: EnhancedFormWizar
             ></div>
           </div>
 
-          {/* Admin Status Controls */}
-          {userIsAdmin && formData.id && (
-            <div className="mt-4 flex gap-2">
-              <span className="text-white text-sm">Admin - Durum Değiştir:</span>
-              {['draft', 'submitted', 'completed', 'sahada', 'sahadan_cikis'].map((status) => (
+          {/* Status Change Controls */}
+          {formData.id && formData.status !== 'completed' && (
+            <div className="mt-4 flex gap-2 items-center flex-wrap">
+              <span className="text-white text-sm">Durum:</span>
+              {['draft', 'field'].map((status) => (
                 <button
                   key={status}
                   onClick={() => handleStatusChange(status)}
-                  className={`text-xs px-2 py-1 rounded transition-colors ${
-                    effectiveStatus === status 
-                      ? 'bg-white text-oregon-blue' 
+                  className={`text-xs px-3 py-1.5 rounded transition-colors ${
+                    formData.status === status
+                      ? 'bg-white text-blue-600 font-medium'
                       : 'bg-white/20 hover:bg-white/30'
                   }`}
                 >
-                  {status === 'draft' ? 'Taslak' :
-                   status === 'submitted' ? 'Tamamlandı' :
-                   status === 'completed' ? 'Tamamlandı' :
-                   status === 'sahada' ? 'Sahada' :
-                   status === 'sahadan_cikis' ? 'Sahadan Çıkış' : status}
+                  {status === 'draft' ? '📝 Taslak' : '🚛 Sahada'}
                 </button>
               ))}
+              <span className="text-white/70 text-xs ml-2">
+                (Durum değiştirmek formu kaydeder)
+              </span>
+            </div>
+          )}
+
+          {formData.status === 'completed' && (
+            <div className="mt-4 bg-green-500/20 px-4 py-2 rounded">
+              <span className="text-white text-sm">✅ Bu form tamamlanmış ve kilitli</span>
             </div>
           )}
         </div>

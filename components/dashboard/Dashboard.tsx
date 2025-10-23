@@ -41,7 +41,6 @@ export default function Dashboard({ onStartNewForm, onLoadForm, onLogout }: Dash
   };
 
 
-  const resolveStatus = (form: EnhancedFormData) => form.customStatus ?? form.status;
   const filterForms = () => {
     let filtered = [...forms];
 
@@ -58,17 +57,22 @@ export default function Dashboard({ onStartNewForm, onLoadForm, onLogout }: Dash
       );
     }
 
-    // Filter by status
+    // Filter by status - exact match, no fallback to customStatus
     if (statusFilter !== 'all') {
       filtered = filtered.filter(form => {
-        const status = resolveStatus(form);
-        // Map 'submitted' to 'completed' for filtering purposes
         if (statusFilter === 'completed') {
-          return status === 'completed' || status === 'submitted';
+          return form.status === 'completed' || form.status === 'submitted';
         }
-        return status === statusFilter;
+        return form.status === statusFilter;
       });
     }
+
+    // Sort: newest first for better UX
+    filtered.sort((a, b) => {
+      const dateA = new Date(a.createdAt || 0).getTime();
+      const dateB = new Date(b.createdAt || 0).getTime();
+      return dateB - dateA;
+    });
 
     setFilteredForms(filtered);
   };
@@ -108,17 +112,14 @@ export default function Dashboard({ onStartNewForm, onLoadForm, onLogout }: Dash
 
   const getStatusBadge = (status: string) => {
     const badges = {
-      draft: { class: 'oregon-warning', text: 'Taslak 📝' },
-      submitted: { class: 'oregon-success', text: 'Tamamlandı ✅' },
-      completed: { class: 'oregon-success', text: 'Tamamlandı ✅' },
-      sahada: { class: 'bg-blue-500 text-white', text: 'Sahada 🚛' },
-      sahadan_cikis: { class: 'bg-purple-500 text-white', text: 'Sahadan Çıkış 🏁' },
-      x: { class: 'bg-orange-500 text-white', text: 'X Durumu ⚠️' },
-      y: { class: 'bg-pink-500 text-white', text: 'Y Durumu 🔄' }
+      draft: { class: 'bg-yellow-500 text-white', text: 'Taslak 📝' },
+      field: { class: 'bg-blue-500 text-white', text: 'Sahada 🚛' },
+      submitted: { class: 'bg-green-500 text-white', text: 'Tamamlandı ✅' },
+      completed: { class: 'bg-green-500 text-white', text: 'Tamamlandı ✅' }
     };
 
     const badge = badges[status as keyof typeof badges] || { class: 'bg-gray-500 text-white', text: status };
-    
+
     return (
       <span className={`${badge.class} px-3 py-1 rounded-full text-xs font-medium`}>
         {badge.text}
@@ -193,7 +194,7 @@ export default function Dashboard({ onStartNewForm, onLoadForm, onLogout }: Dash
               {[
                 { value: 'all', label: 'Tümü', icon: '📋' },
                 { value: 'draft', label: 'Taslak', icon: '📝' },
-                { value: 'sahada', label: 'Sahada', icon: '🚛' },
+                { value: 'field', label: 'Sahada', icon: '🚛' },
                 { value: 'completed', label: 'Tamamlandı', icon: '✅' }
               ].map((filter) => (
                 <button
@@ -246,8 +247,8 @@ export default function Dashboard({ onStartNewForm, onLoadForm, onLogout }: Dash
           ) : (
             <div className="space-y-4">
               {filteredForms.map((form) => {
-                const resolvedStatus = resolveStatus(form);
-                const isFinalized = resolvedStatus === 'completed' || resolvedStatus === 'submitted';
+                const isFinalized = form.status === 'completed' || form.status === 'submitted';
+                const isEditable = form.status === 'draft' || form.status === 'field';
 
                 return (
                   <div key={form.id} className="oregon-card p-4 hover:shadow-lg transition-shadow">
@@ -257,7 +258,7 @@ export default function Dashboard({ onStartNewForm, onLoadForm, onLogout }: Dash
                         <h3 className="font-semibold text-gray-800">
                           {form.tasiyiciFirma || 'Taşıyıcı Firma Belirtilmemiş'}
                         </h3>
-                        {getStatusBadge(resolvedStatus)}
+                        {getStatusBadge(form.status)}
                         <span className="text-xs bg-gray-100 px-2 py-1 rounded font-mono">
                           ID: {typeof form.id === 'string' && form.id ? form.id.slice(-8) : 'N/A'}
                         </span>
