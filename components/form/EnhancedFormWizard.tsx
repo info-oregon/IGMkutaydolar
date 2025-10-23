@@ -146,16 +146,15 @@ export default function EnhancedFormWizard({ formId, onBack }: EnhancedFormWizar
 
       // Upload final PDF to Storage
       const formIdForUpload = currentData.id || 'temp-' + Date.now();
-      const pdfPath = await uploadFinalPdf(formIdForUpload, pdfBytes);
-      console.log('✅ PDF uploaded to Storage:', pdfPath);
+      const { path: pdfPath, sizeBytes: pdfSizeBytes } = await uploadFinalPdf(formIdForUpload, pdfBytes);
+      console.log('✅ PDF uploaded to Storage:', pdfPath, `(${Math.round(pdfSizeBytes / 1024)} KB)`);
 
-      // Save form with selected status
-      const selectedStatus = currentData.customStatus || currentData.status || 'completed';
+      // Save form with completed status (final, locked)
       const updatedFormData: EnhancedFormData = {
         ...currentData,
         pdfPath,
-        status: 'submitted',
-        customStatus: selectedStatus === 'draft' ? undefined : selectedStatus as any,
+        pdfSizeBytes,
+        status: 'completed',
         timestamp: new Date().toLocaleString('tr-TR')
       };
 

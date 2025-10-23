@@ -55,11 +55,13 @@ export interface EnhancedFormData {
 
   fotoListesi?: string[];
 
-  status: 'draft' | 'submitted';
+  status: 'draft' | 'field' | 'submitted' | 'completed';
   customStatus?: 'completed' | 'sahada' | 'sahadan_cikis' | 'x' | 'y';
   companyId?: string;
   inspectorId?: string;
   pdfPath?: string;
+  pdfSizeBytes?: number;
+  thumbnailPath?: string;
   pdfUrl?: string;
   createdAt?: string;
   updatedAt?: string;
@@ -260,6 +262,8 @@ export class EnhancedFormStorageManager {
         company_id: formData.companyId || null,
         inspector_id: formData.inspectorId || null,
         pdf_path: formData.pdfPath || null,
+        pdf_size_bytes: formData.pdfSizeBytes || null,
+        thumbnail_path: formData.thumbnailPath || null,
         pdf_url: formData.pdfUrl || null,
         tasiyici_firma: formData.tasiyiciFirma || null,
         arac_turu: formData.aracTuru || null,
