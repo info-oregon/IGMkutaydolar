@@ -221,37 +221,49 @@ const PdfTemplate: React.FC<PdfTemplateProps> = ({ formData }) => {
               <table style={styles.table}>
                   <thead>
                     <tr><td colSpan={3} style={{...styles.td, ...styles.header}}>MEVCUT MÜHÜR KONTROLÜ</td></tr>
-                    <tr>
-                        <td style={{...styles.td, ...styles.header, ...styles.smallText, width: '50%'}}>Kontrol Noktası</td>
-                        <td style={{...styles.td, ...styles.header, ...styles.smallText, width: '25%'}}>Uygun ✔</td>
-                        <td style={{...styles.td, ...styles.header, ...styles.smallText, width: '25%'}}>Uygun Değil X</td>
-                    </tr>
+                    {get(['muhurDurumu']) === 'Evet' && (
+                      <tr>
+                          <td style={{...styles.td, ...styles.header, ...styles.smallText, width: '50%'}}>Kontrol Noktası</td>
+                          <td style={{...styles.td, ...styles.header, ...styles.smallText, width: '25%'}}>Uygun ✔</td>
+                          <td style={{...styles.td, ...styles.header, ...styles.smallText, width: '25%'}}>Uygun Değil X</td>
+                      </tr>
+                    )}
                   </thead>
                   <tbody>
-                      <tr>
-                          <td style={{...styles.td, ...styles.labelCell, ...styles.smallText}}>Mühür Numarası</td>
-                          <td colSpan={2} style={{...styles.td}}>{get(['muhurNum'])}</td>
-                      </tr>
-                      <tr>
-                          <td style={{...styles.td, ...styles.smallText, textAlign: 'left'}}>Evraklarla Uyum</td>
-                          <td style={{...styles.td}}><Checkbox checked={get(['muhurKontrol', 'evrakUyum'])} /></td>
-                          <td style={{...styles.td}}><Checkbox checked={!get(['muhurKontrol', 'evrakUyum'])} /></td>
-                      </tr>
-                      <tr>
-                          <td style={{...styles.td, ...styles.smallText, textAlign: 'left'}}>Mührün Sağlamlığı</td>
-                          <td style={{...styles.td}}><Checkbox checked={get(['muhurKontrol', 'saglamlik'])} /></td>
-                          <td style={{...styles.td}}><Checkbox checked={!get(['muhurKontrol', 'saglamlik'])} /></td>
-                      </tr>
-                      <tr>
-                          <td style={{...styles.td, ...styles.smallText, textAlign: 'left'}}>Gerginlik Durumu</td>
-                          <td style={{...styles.td}}><Checkbox checked={get(['muhurKontrol', 'gerginlik'])} /></td>
-                          <td style={{...styles.td}}><Checkbox checked={!get(['muhurKontrol', 'gerginlik'])} /></td>
-                      </tr>
-                       <tr>
-                          <td style={{...styles.td, ...styles.smallText, textAlign: 'left'}}>Kilit Aksamı Uygunluğu</td>
-                          <td style={{...styles.td}}><Checkbox checked={get(['muhurKontrol', 'kilitUygunluk'])} /></td>
-                          <td style={{...styles.td}}><Checkbox checked={!get(['muhurKontrol', 'kilitUygunluk'])} /></td>
-                      </tr>
+                      {get(['muhurDurumu']) === 'Evet' ? (
+                        <>
+                          <tr>
+                              <td style={{...styles.td, ...styles.labelCell, ...styles.smallText}}>Mühür Numarası</td>
+                              <td colSpan={2} style={{...styles.td}}>{get(['muhurNum'])}</td>
+                          </tr>
+                          <tr>
+                              <td style={{...styles.td, ...styles.smallText, textAlign: 'left'}}>Evraklarla Uyum</td>
+                              <td style={{...styles.td}}><Checkbox checked={get(['muhurKontrol', 'evrakUyum'])} /></td>
+                              <td style={{...styles.td}}><Checkbox checked={get(['muhurKontrol', 'evrakUyum']) === false} /></td>
+                          </tr>
+                          <tr>
+                              <td style={{...styles.td, ...styles.smallText, textAlign: 'left'}}>Mührün Sağlamlığı</td>
+                              <td style={{...styles.td}}><Checkbox checked={get(['muhurKontrol', 'saglamlik'])} /></td>
+                              <td style={{...styles.td}}><Checkbox checked={get(['muhurKontrol', 'saglamlik']) === false} /></td>
+                          </tr>
+                          <tr>
+                              <td style={{...styles.td, ...styles.smallText, textAlign: 'left'}}>Gerginlik Durumu</td>
+                              <td style={{...styles.td}}><Checkbox checked={get(['muhurKontrol', 'gerginlik'])} /></td>
+                              <td style={{...styles.td}}><Checkbox checked={get(['muhurKontrol', 'gerginlik']) === false} /></td>
+                          </tr>
+                          <tr>
+                              <td style={{...styles.td, ...styles.smallText, textAlign: 'left'}}>Kilit Aksamı Uygunluğu</td>
+                              <td style={{...styles.td}}><Checkbox checked={get(['muhurKontrol', 'kilitUygunluk'])} /></td>
+                              <td style={{...styles.td}}><Checkbox checked={get(['muhurKontrol', 'kilitUygunluk']) === false} /></td>
+                          </tr>
+                        </>
+                      ) : (
+                        <tr>
+                          <td colSpan={3} style={{...styles.td, textAlign: 'center', padding: '12px'}}>
+                            Araç mühürsüz geldi
+                          </td>
+                        </tr>
+                      )}
                   </tbody>
               </table>
                <div style={{height: '10px'}}></div>
