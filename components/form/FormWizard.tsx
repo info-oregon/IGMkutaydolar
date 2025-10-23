@@ -7,7 +7,7 @@ import Step3Checklist from "./Step3Checklist";
 import FormHistory from "./FormHistory";
 import { EnhancedFormData, EnhancedFormStorageManager } from "../../lib/enhancedFormStorage";
 import { generatePdfFromHtml } from "../../lib/htmlToPdf";
-import { supabase } from "../../lib/supabase";
+import { uploadFinalPdf } from "../../lib/storage";
 
 export default function FormWizard() {
   const [showWelcome, setShowWelcome] = useState(true);
@@ -122,36 +122,21 @@ export default function FormWizard() {
         return;
       }
 
-      // PDF oluştur ve Supabase'e kaydet
+      // PDF oluştur ve Storage'a kaydet
       const { previewUrl: generatedPreviewUrl, pdfBytes } = await generatePdfFromHtml(currentData);
 
-      const timestampForFile = new Date().toISOString().replace(/[:.]/g, '-');
-      const filename = `arac-kontrol-${timestampForFile}.pdf`;
+      // Create form ID if not exists
+      const formIdForUpload = currentData.id || crypto.randomUUID();
 
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('inspection-pdfs')
-        .upload(filename, pdfBytes, {
-          contentType: 'application/pdf',
-          upsert: false
-        });
-
-      if (uploadError) {
-        console.error('Supabase yükleme hatası:', uploadError);
-        throw uploadError;
-      }
-
-      console.log('PDF Supabase\'e yüklendi:', uploadData);
-
-      const { data: urlData } = supabase.storage
-        .from('inspection-pdfs')
-        .getPublicUrl(filename);
-
-      const supabaseUrl = urlData.publicUrl;
+      // Upload PDF to storage
+      const pdfPath = await uploadFinalPdf(formIdForUpload, pdfBytes);
+      console.log('✅ PDF uploaded to storage:', pdfPath);
 
       // Formu onaylanmış olarak kaydet
       const updatedFormData: EnhancedFormData = {
         ...currentData,
-        pdfUrl: supabaseUrl,
+        id: formIdForUpload,
+        pdfUrl: pdfPath,
         status: 'submitted',
         customStatus: 'completed',
       };

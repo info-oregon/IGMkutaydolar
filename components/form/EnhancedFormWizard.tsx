@@ -7,7 +7,7 @@ import Step2Checklist from "./Step2Checklist";
 import Step3Checklist from "./Step3Checklist";
 import { canEditForm } from "../../lib/auth";
 import { generatePdfFromHtml } from "../../lib/htmlToPdf";
-import { supabase } from "../../lib/supabase";
+import { uploadFinalPdf } from "../../lib/storage";
 
 interface EnhancedFormWizardProps {
   formId?: string;
@@ -144,36 +144,21 @@ export default function EnhancedFormWizard({ formId, onBack }: EnhancedFormWizar
       // Generate and save PDF
       const { previewUrl: generatedPreviewUrl, pdfBytes } = await generatePdfFromHtml(currentData);
 
-      const timestampForFile = new Date().toISOString().replace(/[:.]/g, '-');
-      const filename = `arac-kontrol-${timestampForFile}.pdf`;
+      // Create form ID if not exists
+      const formIdForUpload = currentData.id || crypto.randomUUID();
 
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('inspection-pdfs')
-        .upload(filename, pdfBytes, {
-          contentType: 'application/pdf',
-          upsert: false
-        });
-
-      if (uploadError) {
-        console.error('❌ Supabase upload error:', uploadError);
-        throw uploadError;
-      }
-
-      console.log('✅ PDF uploaded to Supabase:', uploadData);
-
-      const { data: urlData } = supabase.storage
-        .from('inspection-pdfs')
-        .getPublicUrl(filename);
-
-      const supabaseUrl = urlData.publicUrl;
+      // Upload PDF to storage
+      const pdfPath = await uploadFinalPdf(formIdForUpload, pdfBytes);
+      console.log('✅ PDF uploaded to storage:', pdfPath);
 
       // Save form with selected status
       const selectedStatus = currentData.customStatus || currentData.status || 'completed';
       const updatedFormData: EnhancedFormData = {
         ...currentData,
-        pdfUrl: supabaseUrl,
-        status: (selectedStatus === 'draft' ? 'draft' : 'submitted') as 'draft' | 'submitted',
-        customStatus: selectedStatus === 'draft' ? undefined : selectedStatus as any,
+        id: formIdForUpload,
+        pdfUrl: pdfPath,
+        status: 'submitted',
+        customStatus: selectedStatus === 'draft' ? undefined : (selectedStatus === 'submitted' ? undefined : selectedStatus as any),
         timestamp: new Date().toLocaleString('tr-TR')
       };
 

@@ -1,4 +1,4 @@
-import { supabase } from './supabase';
+import { getBrowserSupabase } from './supabase';
 import { authManager } from './auth';
 import type { ControlRow } from '../types/form';
 
@@ -242,14 +242,20 @@ export class EnhancedFormStorageManager {
       const customStatus = validation.isValid ? 'completed' : null;
 
       const saveData = {
-        form_data: formData,
         status,
         custom_status: customStatus,
         updated_at: new Date().toISOString(),
-        company_id: formData.companyId || null,
-        inspector_id: null // Will be set if user system is implemented
+        tasiyici_firma: formData.tasiyiciFirma || null,
+        arac_turu: formData.aracTuru || null,
+        cekici_plaka: formData.cekiciPlaka || null,
+        genel_sonuc: formData.genelSonuc || null,
+        pdf_path: null,
+        photos: formData.fotoListesi ? JSON.stringify(formData.fotoListesi) : null,
+        signature_path: formData.kontrolEdenImza || null,
+        summary: formData
       };
 
+      const supabase = getBrowserSupabase();
       if (formData.id) {
         // Update existing form
         const { error } = await supabase
@@ -268,7 +274,7 @@ export class EnhancedFormStorageManager {
             ...saveData,
             created_at: new Date().toISOString()
           })
-          .select()
+          .select('id')
           .single();
 
         if (error) throw error;
@@ -310,15 +316,20 @@ export class EnhancedFormStorageManager {
       }
 
       const saveData = {
-        form_data: formData,
         status,
         custom_status: customStatus,
         updated_at: new Date().toISOString(),
-        company_id: formData.companyId || null,
-        inspector_id: formData.inspectorId || null,
-        pdf_url: formData.pdfUrl || null
+        tasiyici_firma: formData.tasiyiciFirma || null,
+        arac_turu: formData.aracTuru || null,
+        cekici_plaka: formData.cekiciPlaka || null,
+        genel_sonuc: formData.genelSonuc || null,
+        pdf_path: formData.pdfUrl || null,
+        photos: formData.fotoListesi ? JSON.stringify(formData.fotoListesi) : null,
+        signature_path: formData.kontrolEdenImza || null,
+        summary: formData
       };
 
+      const supabase = getBrowserSupabase();
       if (formData.id) {
         // Check edit permissions
         const existingForm = await this.getForm(formData.id);
@@ -341,7 +352,7 @@ export class EnhancedFormStorageManager {
             ...saveData,
             created_at: new Date().toISOString()
           })
-          .select()
+          .select('id')
           .single();
 
         if (error) throw error;
@@ -368,9 +379,10 @@ export class EnhancedFormStorageManager {
         throw new Error('Authentication required');
       }
 
+      const supabase = getBrowserSupabase();
       let query = supabase
         .from('forms')
-        .select('*')
+        .select('id,status,custom_status,created_at,updated_at,pdf_path,tasiyici_firma,cekici_plaka,genel_sonuc,summary')
         .order('updated_at', { ascending: false });
 
       // Apply filters
@@ -393,17 +405,21 @@ export class EnhancedFormStorageManager {
       console.log('✅ Forms fetched:', data?.length, 'forms');
 
       // Transform data
-      return (data || []).map(form => ({
-        ...form.form_data,
-        id: form.id,
-        status: form.status,
-        customStatus: form.custom_status,
-        createdAt: form.created_at,
-        updatedAt: form.updated_at,
-        companyId: form.company_id,
-        inspectorId: form.inspector_id,
-        pdfUrl: form.pdf_url
-      }));
+      return (data || []).map(form => {
+        const formData = form.summary || {};
+        return {
+          ...formData,
+          id: form.id,
+          status: form.status,
+          customStatus: form.custom_status,
+          createdAt: form.created_at,
+          updatedAt: form.updated_at,
+          pdfUrl: form.pdf_path,
+          tasiyiciFirma: form.tasiyici_firma,
+          cekiciPlaka: form.cekici_plaka,
+          genelSonuc: form.genel_sonuc
+        };
+      });
     } catch (error) {
       console.error('❌ Forms fetch failed:', error);
       throw error;
@@ -415,11 +431,12 @@ export class EnhancedFormStorageManager {
     try {
       console.log('🔄 Fetching form:', formId);
 
+      const supabase = getBrowserSupabase();
       const { data, error } = await supabase
         .from('forms')
         .select('*')
         .eq('id', formId)
-        .single();
+        .maybeSingle();
 
       if (error) {
         if (error.code === 'PGRST116') {
@@ -435,16 +452,19 @@ export class EnhancedFormStorageManager {
 
       console.log('✅ Form fetched:', formId);
 
+      const formData = data.summary || {};
       return {
-        ...data.form_data,
+        ...formData,
         id: data.id,
         status: data.status,
         customStatus: data.custom_status,
         createdAt: data.created_at,
         updatedAt: data.updated_at,
-        companyId: data.company_id,
-        inspectorId: data.inspector_id,
-        pdfUrl: data.pdf_url
+        pdfUrl: data.pdf_path,
+        tasiyiciFirma: data.tasiyici_firma,
+        aracTuru: data.arac_turu,
+        cekiciPlaka: data.cekici_plaka,
+        genelSonuc: data.genel_sonuc
       };
     } catch (error) {
       console.error('❌ Form fetch failed:', error);
@@ -473,6 +493,7 @@ export class EnhancedFormStorageManager {
         throw new Error('Sadece taslak formlar silinebilir');
       }
 
+      const supabase = getBrowserSupabase();
       const { error } = await supabase
         .from('forms')
         .delete()
@@ -491,10 +512,20 @@ export class EnhancedFormStorageManager {
     try {
       console.log('🔄 Fetching companies...');
       
+      const supabase = getBrowserSupabase();
+      console.log('🔄 Health check: Fetching companies from Supabase...');
       const { data, error } = await supabase
         .from('companies')
         .select('id, name')
-        .order('name');
+        .order('name')
+        .limit(100);
+
+      if (error) {
+        console.error('❌ Companies health check failed:', error);
+        console.error('❌ Error code:', error.code, 'Error message:', error.message);
+      } else {
+        console.log('✅ Companies health check passed:', data?.length, 'companies found');
+      }
 
       if (error) throw error;
 
@@ -523,9 +554,10 @@ export class EnhancedFormStorageManager {
       }
 
       // Get all forms for statistics
+      const supabase = getBrowserSupabase();
       const { data: allForms, error } = await supabase
         .from('forms')
-        .select('*')
+        .select('id,status,custom_status,created_at,updated_at,summary')
         .order('updated_at', { ascending: false });
 
       if (error) throw error;
@@ -537,17 +569,17 @@ export class EnhancedFormStorageManager {
 
       // Get recent forms (last 5)
       const recentFormsData = allForms?.slice(0, 5) || [];
-      const recentForms: EnhancedFormData[] = recentFormsData.map(form => ({
-        ...form.form_data,
-        id: form.id,
-        status: form.status,
-        customStatus: form.custom_status,
-        createdAt: form.created_at,
-        updatedAt: form.updated_at,
-        companyId: form.company_id,
-        inspectorId: form.inspector_id,
-        pdfUrl: form.pdf_url
-      }));
+      const recentForms: EnhancedFormData[] = recentFormsData.map(form => {
+        const formData = form.summary || {};
+        return {
+          ...formData,
+          id: form.id,
+          status: form.status,
+          customStatus: form.custom_status,
+          createdAt: form.created_at,
+          updatedAt: form.updated_at
+        };
+      });
 
       console.log('✅ Dashboard stats fetched:', {
         totalForms,
