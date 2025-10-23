@@ -319,6 +319,14 @@ export class EnhancedFormStorageManager {
         pdf_url: formData.pdfUrl || null
       };
 
+      console.log('📝 Prepared save data:', {
+        hasFormId: !!formData.id,
+        status,
+        customStatus,
+        companyId: formData.companyId,
+        pdfUrl: formData.pdfUrl ? 'Yes' : 'No'
+      });
+
       if (formData.id) {
         // Check edit permissions
         const existingForm = await this.getForm(formData.id);
@@ -326,15 +334,20 @@ export class EnhancedFormStorageManager {
           throw new Error('Bu formu düzenleme yetkiniz bulunmuyor');
         }
 
+        console.log('🔄 Updating existing form:', formData.id);
         const { error } = await supabase
           .from('forms')
           .update(saveData)
           .eq('id', formData.id);
 
-        if (error) throw error;
+        if (error) {
+          console.error('❌ Update error:', error);
+          throw error;
+        }
         console.log('✅ Form updated:', formData.id, 'Status:', status);
         return formData.id;
       } else {
+        console.log('🆕 Creating new form...');
         const { data, error } = await supabase
           .from('forms')
           .insert({
@@ -344,8 +357,11 @@ export class EnhancedFormStorageManager {
           .select()
           .single();
 
-        if (error) throw error;
-        console.log('✅ Form created:', data.id, 'Status:', status);
+        if (error) {
+          console.error('❌ Insert error:', error);
+          throw error;
+        }
+        console.log('✅ Form created with ID:', data.id, 'Status:', status);
         return data.id;
       }
     } catch (error) {

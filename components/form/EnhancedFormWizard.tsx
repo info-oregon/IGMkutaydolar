@@ -177,9 +177,20 @@ export default function EnhancedFormWizard({ formId, onBack }: EnhancedFormWizar
         timestamp: new Date().toLocaleString('tr-TR')
       };
 
+      console.log('💾 Attempting to save form to Supabase...', {
+        status: updatedFormData.status,
+        customStatus: updatedFormData.customStatus,
+        pdfUrl: updatedFormData.pdfUrl,
+        companyId: updatedFormData.companyId
+      });
+
       const savedId = await EnhancedFormStorageManager.saveForm(updatedFormData);
 
-      console.log('✅ Form submitted successfully:', savedId);
+      console.log('✅ Form submitted successfully with ID:', savedId);
+
+      // Verify form was saved
+      const verifyForm = await EnhancedFormStorageManager.getForm(savedId);
+      console.log('✅ Form verification:', verifyForm ? 'Found in database' : 'NOT FOUND!');
       alert('Form başarıyla tamamlandı ve kaydedildi! 🎉');
 
       // Download PDF
