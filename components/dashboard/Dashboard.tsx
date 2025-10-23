@@ -57,13 +57,10 @@ export default function Dashboard({ onStartNewForm, onLoadForm, onLogout }: Dash
       );
     }
 
-    // Filter by status - exact match, no fallback to customStatus
+    // Filter by custom_status (UI filter category)
     if (statusFilter !== 'all') {
       filtered = filtered.filter(form => {
-        if (statusFilter === 'completed') {
-          return form.status === 'completed' || form.status === 'submitted';
-        }
-        return form.status === statusFilter;
+        return form.customStatus === statusFilter;
       });
     }
 
@@ -110,15 +107,14 @@ export default function Dashboard({ onStartNewForm, onLoadForm, onLogout }: Dash
     }
   };
 
-  const getStatusBadge = (status: string) => {
+  const getStatusBadge = (customStatus: string) => {
     const badges = {
       draft: { class: 'bg-yellow-500 text-white', text: 'Taslak 📝' },
       field: { class: 'bg-blue-500 text-white', text: 'Sahada 🚛' },
-      submitted: { class: 'bg-green-500 text-white', text: 'Tamamlandı ✅' },
       completed: { class: 'bg-green-500 text-white', text: 'Tamamlandı ✅' }
     };
 
-    const badge = badges[status as keyof typeof badges] || { class: 'bg-gray-500 text-white', text: status };
+    const badge = badges[customStatus as keyof typeof badges] || { class: 'bg-gray-500 text-white', text: customStatus };
 
     return (
       <span className={`${badge.class} px-3 py-1 rounded-full text-xs font-medium`}>
@@ -247,8 +243,8 @@ export default function Dashboard({ onStartNewForm, onLoadForm, onLogout }: Dash
           ) : (
             <div className="space-y-4">
               {filteredForms.map((form) => {
-                const isFinalized = form.status === 'completed' || form.status === 'submitted';
-                const isEditable = form.status === 'draft' || form.status === 'field';
+                const isFinalized = form.status === 'completed';
+                const isEditable = form.status === 'draft';
 
                 return (
                   <div key={form.id} className="oregon-card p-4 hover:shadow-lg transition-shadow">
@@ -258,7 +254,7 @@ export default function Dashboard({ onStartNewForm, onLoadForm, onLogout }: Dash
                         <h3 className="font-semibold text-gray-800">
                           {form.tasiyiciFirma || 'Taşıyıcı Firma Belirtilmemiş'}
                         </h3>
-                        {getStatusBadge(form.status)}
+                        {getStatusBadge(form.customStatus || 'draft')}
                         <span className="text-xs bg-gray-100 px-2 py-1 rounded font-mono">
                           ID: {typeof form.id === 'string' && form.id ? form.id.slice(-8) : 'N/A'}
                         </span>

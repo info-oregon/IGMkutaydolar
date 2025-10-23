@@ -55,8 +55,7 @@ export default function FormWizard() {
         setShowWelcome(false);
         
         // Form durumuna göre adımı belirle
-        const resolvedStatus = existingForm.customStatus ?? existingForm.status;
-        if (resolvedStatus === 'completed' || resolvedStatus === 'submitted') {
+        if (existingForm.customStatus === 'completed' || existingForm.status === 'completed') {
           setStep(3); // Onaylanmış formları son adımda göster
         } else {
           setStep(1); // Taslakları baştan başlat
@@ -152,10 +151,10 @@ export default function FormWizard() {
       const updatedFormData: EnhancedFormData = {
         ...currentData,
         pdfUrl: supabaseUrl,
-        status: 'submitted',
+        status: 'completed',
         customStatus: 'completed',
       };
-      const formId = await EnhancedFormStorageManager.saveForm(updatedFormData, 'completed');
+      const formId = await EnhancedFormStorageManager.saveForm(updatedFormData);
 
       console.log('Form başarıyla onaylandı:', formId);
       // Başarı mesajı göster

@@ -55,8 +55,8 @@ export interface EnhancedFormData {
 
   fotoListesi?: string[];
 
-  status: 'draft' | 'field' | 'submitted' | 'completed';
-  customStatus?: 'completed' | 'sahada' | 'sahadan_cikis' | 'x' | 'y';
+  status: 'draft' | 'completed';
+  customStatus?: 'field' | 'draft' | 'completed';
   companyId?: string;
   inspectorId?: string;
   pdfPath?: string;
@@ -235,24 +235,15 @@ export class EnhancedFormStorageManager {
   static async saveForm(formData: EnhancedFormData, forceStatus?: string): Promise<string> {
     try {
       const user = authManager.getCurrentUser();
-      const validation = this.validateForm(formData);
 
-      let status = forceStatus || (validation.isValid ? 'submitted' : 'draft');
-      let customStatus = undefined;
+      // Determine custom_status (UI filter category)
+      const customStatus = formData.customStatus || formData.status || 'draft';
 
-      if (forceStatus && !['draft', 'submitted'].includes(forceStatus)) {
-        customStatus = forceStatus as any;
-        status = 'submitted';
-      }
-
-      if (user?.role === 'admin' && forceStatus) {
-        if (['draft', 'submitted'].includes(forceStatus)) {
-          status = forceStatus;
-        } else {
-          customStatus = forceStatus as any;
-          status = 'submitted';
-        }
-      }
+      // Status is auto-synced by DB trigger based on custom_status
+      // But we still send it for clarity:
+      // - If custom_status = 'field' or 'draft' → status = 'draft' (editable)
+      // - If custom_status = 'completed' → status = 'completed' (locked)
+      const status = customStatus === 'completed' ? 'completed' : 'draft';
 
       const saveData = {
         form_data: formData,
@@ -405,7 +396,7 @@ export class EnhancedFormStorageManager {
         throw new Error('Form bulunamadı');
       }
 
-      if (user.role !== 'admin' && existingForm.status !== 'draft' && existingForm.status !== 'submitted') {
+      if (user.role !== 'admin' && existingForm.status !== 'draft') {
         throw new Error('Sadece taslak formlar silinebilir');
       }
 

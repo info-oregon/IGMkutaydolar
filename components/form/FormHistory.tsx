@@ -143,7 +143,7 @@ export default function FormHistory({ onBack, onLoadForm, onNewForm }: FormHisto
                 const createdAt = form.createdAt ? formatDate(form.createdAt) : '-';
                 const updatedAt = form.updatedAt ? formatDate(form.updatedAt) : '-';
                 const formId = form.id ?? `form-${index}`;
-                const isFinalized = resolvedStatus === 'submitted' || resolvedStatus === 'completed';
+                const isFinalized = resolvedStatus === 'completed';
 
                 return (
                   <div key={formId} className="oregon-card p-4 hover:shadow-lg transition-shadow">

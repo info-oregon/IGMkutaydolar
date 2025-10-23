@@ -17,7 +17,8 @@ interface EnhancedFormWizardProps {
 export default function EnhancedFormWizard({ formId, onBack }: EnhancedFormWizardProps) {
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState<EnhancedFormData>({
-    status: 'draft'
+    status: 'draft',
+    customStatus: 'draft'
   });
   const [isProcessing, setIsProcessing] = useState(false);
   const [isLoading, setIsLoading] = useState(!!formId);
@@ -30,7 +31,7 @@ export default function EnhancedFormWizard({ formId, onBack }: EnhancedFormWizar
   // Check if form is editable
   const isFormEditable = canEditForm(formData.status);
 
-  const effectiveStatus = formData.customStatus ?? formData.status;
+  const effectiveStatus = formData.customStatus || 'draft';
 
   // Load existing form if formId provided
   useEffect(() => {
@@ -70,8 +71,7 @@ export default function EnhancedFormWizard({ formId, onBack }: EnhancedFormWizar
         setFormData(existingForm);
         
         // Set appropriate step based on form completeness
-        const resolvedStatus = existingForm.customStatus ?? existingForm.status;
-        if (resolvedStatus === 'completed' || resolvedStatus === 'submitted') {
+        if (existingForm.customStatus === 'completed' || existingForm.status === 'completed') {
           setStep(3); // Show final step for completed forms
         } else if (existingForm.fizikiKontrol || existingForm.zulaKontrol) {
           setStep(3); // Has control data
@@ -155,6 +155,7 @@ export default function EnhancedFormWizard({ formId, onBack }: EnhancedFormWizar
         pdfPath,
         pdfSizeBytes,
         status: 'completed',
+        customStatus: 'completed',
         timestamp: new Date().toLocaleString('tr-TR')
       };
 
@@ -188,17 +189,23 @@ export default function EnhancedFormWizard({ formId, onBack }: EnhancedFormWizar
     }
   };
 
-  const handleStatusChange = async (newStatus: string) => {
+  const handleStatusChange = async (newCustomStatus: string) => {
     if (formData.status === 'completed') {
       alert('Tamamlanmış formların durumu değiştirilemez.');
       return;
     }
 
     try {
-      const updatedFormData = { ...formData, status: newStatus as any };
+      // Update customStatus (UI filter category)
+      // Status will be auto-synced by DB trigger
+      const updatedFormData: EnhancedFormData = {
+        ...formData,
+        customStatus: newCustomStatus as 'field' | 'draft' | 'completed',
+        status: 'draft' as const
+      };
       await EnhancedFormStorageManager.saveForm(updatedFormData);
       setFormData(updatedFormData);
-      console.log(`✅ Form durumu "${newStatus}" olarak güncellendi.`);
+      console.log(`✅ Form durumu "${newCustomStatus}" olarak güncellendi.`);
     } catch (error) {
       console.error('❌ Status update failed:', error);
       alert('Durum güncellenirken bir hata oluştu.');
@@ -240,14 +247,12 @@ export default function EnhancedFormWizard({ formId, onBack }: EnhancedFormWizar
               
               {/* Status Badge */}
               <div className={`text-xs px-2 py-1 rounded ${
-                (effectiveStatus === 'completed' || effectiveStatus === 'submitted') ? 'bg-green-500/80' :
-                effectiveStatus === 'sahada' ? 'bg-blue-500/80' :
-                effectiveStatus === 'sahadan_cikis' ? 'bg-purple-500/80' :
+                effectiveStatus === 'completed' ? 'bg-green-500/80' :
+                effectiveStatus === 'field' ? 'bg-blue-500/80' :
                 'bg-white/20'
               }`}>
-                {(effectiveStatus === 'completed' || effectiveStatus === 'submitted') ? 'Tamamlandı ✅' :
-                 effectiveStatus === 'sahada' ? 'Sahada 🚛' :
-                 effectiveStatus === 'sahadan_cikis' ? 'Sahadan Çıkış 🏁' :
+                {effectiveStatus === 'completed' ? 'Tamamlandı ✅' :
+                 effectiveStatus === 'field' ? 'Sahada 🚛' :
                  'Taslak 📝'}
               </div>
 
@@ -282,17 +287,17 @@ export default function EnhancedFormWizard({ formId, onBack }: EnhancedFormWizar
           {formData.id && formData.status !== 'completed' && (
             <div className="mt-4 flex gap-2 items-center flex-wrap">
               <span className="text-white text-sm">Durum:</span>
-              {['draft', 'field'].map((status) => (
+              {['draft', 'field'].map((customStatus) => (
                 <button
-                  key={status}
-                  onClick={() => handleStatusChange(status)}
+                  key={customStatus}
+                  onClick={() => handleStatusChange(customStatus)}
                   className={`text-xs px-3 py-1.5 rounded transition-colors ${
-                    formData.status === status
+                    formData.customStatus === customStatus
                       ? 'bg-white text-blue-600 font-medium'
                       : 'bg-white/20 hover:bg-white/30'
                   }`}
                 >
-                  {status === 'draft' ? '📝 Taslak' : '🚛 Sahada'}
+                  {customStatus === 'draft' ? '📝 Taslak' : '🚛 Sahada'}
                 </button>
               ))}
               <span className="text-white/70 text-xs ml-2">
