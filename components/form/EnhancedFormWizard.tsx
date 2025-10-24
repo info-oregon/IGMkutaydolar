@@ -154,7 +154,7 @@ export default function EnhancedFormWizard({ formId, onBack }: EnhancedFormWizar
         ...currentData,
         pdfPath,
         pdfSizeBytes,
-        status: 'completed',
+        // Do NOT set status manually - DB trigger auto-syncs from customStatus
         customStatus: 'completed',
         timestamp: new Date().toLocaleString('tr-TR')
       };
@@ -197,11 +197,11 @@ export default function EnhancedFormWizard({ formId, onBack }: EnhancedFormWizar
 
     try {
       // Update customStatus (UI filter category)
-      // Status will be auto-synced by DB trigger
+      // Status will be auto-synced by DB trigger - do NOT set manually
       const updatedFormData: EnhancedFormData = {
         ...formData,
-        customStatus: newCustomStatus as 'field' | 'draft' | 'completed',
-        status: 'draft' as const
+        customStatus: newCustomStatus as 'field' | 'draft' | 'completed'
+        // status field NOT included - trigger handles it
       };
       await EnhancedFormStorageManager.saveForm(updatedFormData);
       setFormData(updatedFormData);

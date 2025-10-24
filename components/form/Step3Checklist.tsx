@@ -300,7 +300,7 @@ const saveSignature = () => {
         cikis_muhurSaglamlik: yeniMuhurKontrol?.saglamlik ?? null,
         cikis_muhurGerginlik: yeniMuhurKontrol?.gerginlik ?? null,
         cikis_muhurKilit: yeniMuhurKontrol?.kilitUygunluk ?? null,
-        status: manualStatus === 'completed' ? 'completed' : 'draft',
+        // Do NOT set status manually - DB trigger auto-syncs from customStatus
         customStatus: manualStatus as 'draft' | 'field' | 'completed'
       };
 

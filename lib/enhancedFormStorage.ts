@@ -237,17 +237,16 @@ export class EnhancedFormStorageManager {
       const user = authManager.getCurrentUser();
 
       // Determine custom_status (UI filter category)
-      const customStatus = formData.customStatus || formData.status || 'draft';
+      const customStatus = formData.customStatus || 'draft';
 
-      // Status is auto-synced by DB trigger based on custom_status
-      // But we still send it for clarity:
+      // IMPORTANT: Do NOT send 'status' field manually!
+      // Database trigger 'sync_form_status()' will auto-sync status based on custom_status:
       // - If custom_status = 'field' or 'draft' → status = 'draft' (editable)
       // - If custom_status = 'completed' → status = 'completed' (locked)
-      const status = customStatus === 'completed' ? 'completed' : 'draft';
 
       const saveData = {
         form_data: formData,
-        status,
+        // status field is NOT included - trigger will set it automatically
         custom_status: customStatus,
         updated_at: new Date().toISOString(),
         company_id: formData.companyId || null,

@@ -151,7 +151,7 @@ export default function FormWizard() {
       const updatedFormData: EnhancedFormData = {
         ...currentData,
         pdfUrl: supabaseUrl,
-        status: 'completed',
+        // Do NOT set status manually - DB trigger auto-syncs from customStatus
         customStatus: 'completed',
       };
       const formId = await EnhancedFormStorageManager.saveForm(updatedFormData);
